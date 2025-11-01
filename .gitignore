@@ -1,0 +1,25 @@
+# Rust's output directory
+target
+
+# Cargo lock file (for library/contract projects)
+Cargo.lock
+
+# Local settings
+.soroban
+.stellar
+
+# Test snapshots (generated files)
+test_snapshots/
+**/test_snapshots/
+
+# IDE and editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Backup files
+*.bak
+*.backup

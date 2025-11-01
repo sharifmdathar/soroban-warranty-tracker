@@ -1,0 +1,303 @@
+# 🔐 Warranty Tracker
+
+A Soroban smart contract for tracking product warranties on the Stellar network. This contract allows users to register, manage, and transfer warranties in a decentralized and immutable way.
+
+## ✨ Features
+
+- 📝 **Warranty Registration**: Register warranties with product details, serial numbers, and expiration dates
+- 🔍 **Owner-based Querying**: Efficiently query all warranties owned by a specific address
+- 🔄 **Ownership Transfer**: Transfer warranty ownership between addresses (only for active warranties)
+- 📊 **Status Management**: Update warranty status (Active, Expired, Revoked) with owner-based access control
+- ⏰ **Automatic Expiration**: Automatically detect and mark warranties as expired based on expiration dates
+- 🔒 **Access Control**: Only warranty owners can modify or transfer their warranties
+
+## 📋 Prerequisites
+
+Before you begin, ensure you have the following installed:
+
+- 🦀 [Rust](https://www.rust-lang.org/tools/install) (latest stable version)
+- ⭐ [Stellar CLI](https://developers.stellar.org/docs/tools/stellar-cli) (for contract deployment)
+- 🔧 [Soroban CLI](https://soroban.stellar.org/docs/getting-started/setup#install-the-soroban-cli)
+
+## 📁 Project Structure
+
+```
+.
+├── contracts/
+│   └── warranty-tracker/
+│       ├── src/
+│       │   ├── lib.rs      # Main contract implementation
+│       │   └── test.rs      # Test suite
+│       ├── Cargo.toml       # Contract dependencies
+│       └── Makefile         # Build and test commands
+├── Cargo.toml               # Workspace configuration
+└── README.md
+```
+
+## 🔨 Building
+
+Build the contract:
+
+```bash
+cd contracts/warranty-tracker
+make build
+```
+
+Or use the Stellar CLI directly:
+
+```bash
+stellar contract build
+```
+
+The compiled WASM file will be located at:
+
+```
+target/wasm32v1-none/release/warranty_tracker.wasm
+```
+
+## 🧪 Testing
+
+Run the test suite:
+
+```bash
+cd contracts/warranty-tracker
+make test
+```
+
+Or use Cargo directly:
+
+```bash
+cargo test
+```
+
+The test suite covers:
+
+- ✅ Warranty registration with validation
+- 🔍 Querying warranties by ID and owner
+- 📊 Status updates (Active, Expired, Revoked)
+- 🔄 Ownership transfers
+- 🚫 Transfer restrictions for non-active warranties
+- ⏰ Expiration detection
+
+## 📡 Contract API
+
+### 📝 `register_warranty`
+
+Register a new warranty.
+
+**Parameters:**
+
+- `owner: Address` - The address that owns this warranty
+- `product_name: String` - Name of the product
+- `serial_number: String` - Serial number of the product
+- `manufacturer: String` - Manufacturer name
+- `purchase_date: u64` - Purchase date as Unix timestamp
+- `expiration_date: u64` - Warranty expiration date as Unix timestamp
+
+**Returns:** `u64` - The warranty ID
+
+**Requirements:**
+
+- Owner must authenticate the transaction
+- `expiration_date` must be after `purchase_date`
+- `purchase_date` cannot be in the future
+
+**Status Assignment:**
+
+- Automatically sets status to `Expired` if `expiration_date` is in the past
+- Otherwise sets status to `Active`
+
+### 🔍 `get_warranty`
+
+Get warranty details by ID.
+
+**Parameters:**
+
+- `warranty_id: u64` - The warranty ID to query
+
+**Returns:** `Option<WarrantyData>` - The warranty details or None if not found
+
+### 📋 `get_warranties_by_owner`
+
+Get all warranty IDs owned by a specific address.
+
+**Parameters:**
+
+- `owner: Address` - The owner address
+
+**Returns:** `Vec<u64>` - Vector of warranty IDs owned by the address
+
+### 📊 `update_status`
+
+Update warranty status. Only the owner can update the status.
+
+**Parameters:**
+
+- `warranty_id: u64` - The warranty ID to update
+- `status: WarrantyStatus` - The new status (Active, Expired, or Revoked)
+
+**Requirements:**
+
+- Owner must authenticate the transaction
+
+### 🔄 `transfer_ownership`
+
+Transfer warranty ownership to another address.
+
+**Parameters:**
+
+- `warranty_id: u64` - The warranty ID to transfer
+- `new_owner: Address` - The new owner address
+
+**Requirements:**
+
+- Current owner must authenticate the transaction
+- Warranty must be in `Active` status (cannot transfer expired or revoked warranties)
+
+**Effects:**
+
+- Updates the warranty owner
+- Removes warranty ID from old owner's list
+- Adds warranty ID to new owner's list
+
+### 🚫 `revoke_warranty`
+
+Revoke a warranty. Only the owner can revoke.
+
+**Parameters:**
+
+- `warranty_id: u64` - The warranty ID to revoke
+
+**Requirements:**
+
+- Owner must authenticate the transaction
+
+**Effects:**
+
+- Sets warranty status to `Revoked`
+
+### 📈 `get_warranty_count`
+
+Get the total number of registered warranties.
+
+**Returns:** `u64` - Total warranty count
+
+### ⏰ `is_warranty_expired`
+
+Check if a warranty is expired based on current time.
+
+**Parameters:**
+
+- `warranty_id: u64` - The warranty ID to check
+
+**Returns:** `bool` - `true` if warranty is expired, `false` otherwise
+
+## 🏗️ Data Structures
+
+### `WarrantyData`
+
+```rust
+pub struct WarrantyData {
+    pub id: u64,                    // Unique warranty identifier
+    pub owner: Address,             // Current owner address
+    pub product_name: String,       // Product name
+    pub serial_number: String,     // Product serial number
+    pub manufacturer: String,       // Manufacturer name
+    pub purchase_date: u64,         // Purchase date (Unix timestamp)
+    pub expiration_date: u64,      // Expiration date (Unix timestamp)
+    pub status: WarrantyStatus,     // Current status
+    pub created_at: u64,             // Creation timestamp
+}
+```
+
+### `WarrantyStatus`
+
+```rust
+pub enum WarrantyStatus {
+    Active,    // Warranty is active
+    Expired,   // Warranty has expired
+    Revoked,   // Warranty has been revoked
+}
+```
+
+## 💡 Usage Example
+
+Here's a basic example of how to interact with the contract:
+
+```rust
+// Register a warranty
+let warranty_id = contract.register_warranty(
+    &owner,
+    &String::from_str(&env, "Laptop Pro 2024"),
+    &String::from_str(&env, "SN123456789"),
+    &String::from_str(&env, "TechCorp"),
+    &1704067200,  // purchase_date
+    &1735689600,  // expiration_date (1 year later)
+);
+
+// Query warranty details
+let warranty = contract.get_warranty(&warranty_id);
+
+// Get all warranties for an owner
+let owner_warranties = contract.get_warranties_by_owner(&owner);
+
+// Transfer ownership
+contract.transfer_ownership(&warranty_id, &new_owner);
+
+// Revoke warranty
+contract.revoke_warranty(&warranty_id);
+
+// Check expiration
+let is_expired = contract.is_warranty_expired(&warranty_id);
+```
+
+## 🛠️ Development
+
+### 🎨 Code Formatting
+
+Format the code:
+
+```bash
+make fmt
+```
+
+Or:
+
+```bash
+cargo fmt --all
+```
+
+### 🧹 Clean Build Artifacts
+
+Clean build artifacts:
+
+```bash
+make clean
+```
+
+Or:
+
+```bash
+cargo clean
+```
+
+## 🔐 Security Considerations
+
+- 🔒 **Access Control**: All write operations require owner authentication
+- ✅ **Validation**: Purchase dates and expiration dates are validated on registration
+- 🚫 **Transfer Restrictions**: Only active warranties can be transferred
+- 📜 **Immutable History**: Once registered, warranty data cannot be deleted, only status can be updated
+
+## 📄 License
+
+This project is licensed under the MIT License (or specify your license).
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## 📚 Resources
+
+- 📖 [Soroban Documentation](https://soroban.stellar.org/docs)
+- ⭐ [Stellar Documentation](https://developers.stellar.org/)
+- 📘 [Soroban SDK Reference](https://docs.rs/soroban-sdk/)
