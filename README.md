@@ -2,6 +2,10 @@
 
 A Soroban smart contract for tracking product warranties on the Stellar network. This contract allows users to register, manage, and transfer warranties in a decentralized and immutable way.
 
+## 🌐 Deployed Contract
+**Testnet Contract ID:** CDHLYNTLHUONKTPEMEJLN6RU43SR7XJLVSJLCUMIRRNR7D4NSG644DEU
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/8c12a65d-00b3-464a-acc5-694eb454dc3c" />
+> 💡 **Note:** To use this contract in the frontend, paste the Contract ID in the Settings section.
 ## ✨ Features
 
 - 📝 **Warranty Registration**: Register warranties with product details, serial numbers, and expiration dates
@@ -10,6 +14,14 @@ A Soroban smart contract for tracking product warranties on the Stellar network.
 - 📊 **Status Management**: Update warranty status (Active, Expired, Revoked) with owner-based access control
 - ⏰ **Automatic Expiration**: Automatically detect and mark warranties as expired based on expiration dates
 - 🔒 **Access Control**: Only warranty owners can modify or transfer their warranties
+
+## Project Visuals
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/984bb351-cb68-4613-b8a7-314e9ece6b67" />
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/a8910d31-922a-4fb4-be80-bc0a70111c59" />
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/8dac6872-5c3a-4873-8b6c-b1394dc06694" />
+
+
+
 
 ## 📋 Prerequisites
 
