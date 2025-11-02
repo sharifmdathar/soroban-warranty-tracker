@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useState, Suspense, lazy } from "react";
 import { Package, Search, ArrowRight, Shield, Settings } from "lucide-react";
-import RegisterWarranty from "./components/RegisterWarranty";
-import ViewWarranties from "./components/ViewWarranties";
-import TransferOwnership from "./components/TransferOwnership";
-import ManageStatus from "./components/ManageStatus";
+
+// Lazy load components for code splitting
+const RegisterWarranty = lazy(() => import("./components/RegisterWarranty"));
+const ViewWarranties = lazy(() => import("./components/ViewWarranties"));
+const TransferOwnership = lazy(() => import("./components/TransferOwnership"));
+const ManageStatus = lazy(() => import("./components/ManageStatus"));
 
 type View = "register" | "view" | "transfer" | "status" | "settings";
 
@@ -123,7 +125,20 @@ function App() {
                 </button>
               </div>
             ) : (
-              <>
+              <Suspense
+                fallback={
+                  <div className="bg-white rounded-lg shadow-md p-6">
+                    <div className="animate-pulse">
+                      <div className="h-6 bg-gray-200 rounded w-1/4 mb-4"></div>
+                      <div className="space-y-3">
+                        <div className="h-4 bg-gray-200 rounded"></div>
+                        <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+                        <div className="h-4 bg-gray-200 rounded w-4/6"></div>
+                      </div>
+                    </div>
+                  </div>
+                }
+              >
                 {currentView === "register" && (
                   <RegisterWarranty contractId={contractId} />
                 )}
@@ -136,7 +151,7 @@ function App() {
                 {currentView === "status" && (
                   <ManageStatus contractId={contractId} />
                 )}
-              </>
+              </Suspense>
             )}
           </main>
         </div>

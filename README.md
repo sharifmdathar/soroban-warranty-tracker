@@ -2,10 +2,16 @@
 
 A Soroban smart contract for tracking product warranties on the Stellar network. This contract allows users to register, manage, and transfer warranties in a decentralized and immutable way.
 
-## 🌐 Deployed Contract
-**Testnet Contract ID:** CDHLYNTLHUONKTPEMEJLN6RU43SR7XJLVSJLCUMIRRNR7D4NSG644DEU
+## 🌐 Live Demo & Deployed Contract
+
+**Frontend**: [https://soroban-warranty-tracker.vercel.app/](https://soroban-warranty-tracker.vercel.app/)
+
+**Testnet Contract ID:** `CDHLYNTLHUONKTPEMEJLN6RU43SR7XJLVSJLCUMIRRNR7D4NSG644DEU`
+
 <img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/8c12a65d-00b3-464a-acc5-694eb454dc3c" />
-> 💡 **Note:** To use this contract in the frontend, paste the Contract ID in the Settings section.
+
+> 💡 **Note:** Connect your Freighter wallet and start tracking warranties on Stellar testnet! To use this contract in the frontend, paste the Contract ID in the Settings section if needed.
+
 ## ✨ Features
 
 - 📝 **Warranty Registration**: Register warranties with product details, serial numbers, and expiration dates
@@ -16,12 +22,10 @@ A Soroban smart contract for tracking product warranties on the Stellar network.
 - 🔒 **Access Control**: Only warranty owners can modify or transfer their warranties
 
 ## Project Visuals
+
 <img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/984bb351-cb68-4613-b8a7-314e9ece6b67" />
 <img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/a8910d31-922a-4fb4-be80-bc0a70111c59" />
 <img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/8dac6872-5c3a-4873-8b6c-b1394dc06694" />
-
-
-
 
 ## 📋 Prerequisites
 
@@ -69,6 +73,8 @@ target/wasm32v1-none/release/warranty_tracker.wasm
 
 ## 🚀 Deployment
 
+### Contract Deployment
+
 To deploy the contract to the Soroban network:
 
 1. **Build the contract** (see above)
@@ -77,9 +83,9 @@ To deploy the contract to the Soroban network:
 4. **Get the Contract ID** from the deployment output
 5. **Configure your frontend** with the Contract ID
 
-For detailed deployment instructions, see [DEPLOYMENT.md](./DEPLOYMENT.md).
+For detailed contract deployment instructions, see [CONTRACT_DEPLOYMENT.md](./CONTRACT_DEPLOYMENT.md).
 
-### Quick Deploy to testnet
+#### Quick Deploy to testnet
 
 ```bash
 # 1. Generate account or add existing one
@@ -103,6 +109,12 @@ stellar contract deploy \
 
 # 5. Copy the Contract ID and use it in your frontend Settings!
 ```
+
+### Frontend Deployment
+
+The frontend is deployed and live at: **[https://soroban-warranty-tracker.vercel.app/](https://soroban-warranty-tracker.vercel.app/)**
+
+For frontend deployment instructions, see [FRONTEND_DEPLOYMENT.md](./FRONTEND_DEPLOYMENT.md).
 
 ## 🧪 Testing
 
