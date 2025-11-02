@@ -1,20 +1,24 @@
-import { useState, useMemo } from 'react';
-import { Search, Eye, Calendar, Package } from 'lucide-react';
-import type { WarrantyData, WarrantyStatus } from '../types';
-import { formatDate, getStatusColor, WarrantyTrackerClient } from '../utils/soroban';
+import { useState, useMemo } from "react";
+import { Search, Eye, Calendar, Package } from "lucide-react";
+import type { WarrantyData, WarrantyStatus } from "../types";
+import {
+  formatDate,
+  getStatusColor,
+  WarrantyTrackerClient,
+} from "../utils/soroban";
 
 interface ViewWarrantiesProps {
   contractId: string;
 }
 
 export default function ViewWarranties({ contractId }: ViewWarrantiesProps) {
-  const [warrantyId, setWarrantyId] = useState('');
-  const [owner, setOwner] = useState('');
+  const [warrantyId, setWarrantyId] = useState("");
+  const [owner, setOwner] = useState("");
   const [warranty, setWarranty] = useState<WarrantyData | null>(null);
   const [warranties, setWarranties] = useState<WarrantyData[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<'id' | 'owner'>('id');
+  const [viewMode, setViewMode] = useState<"id" | "owner">("id");
 
   // Create client instance when contractId is available
   const client = useMemo(() => {
@@ -22,19 +26,19 @@ export default function ViewWarranties({ contractId }: ViewWarrantiesProps) {
     try {
       return new WarrantyTrackerClient({ contractId });
     } catch (err) {
-      console.error('Failed to create WarrantyTrackerClient:', err);
+      console.error("Failed to create WarrantyTrackerClient:", err);
       return null;
     }
   }, [contractId]);
 
   const handleSearchById = async () => {
     if (!client) {
-      setError('Contract ID not configured. Please set it in Settings.');
+      setError("Contract ID not configured. Please set it in Settings.");
       return;
     }
 
     if (!warrantyId.trim()) {
-      setError('Please enter a warranty ID');
+      setError("Please enter a warranty ID");
       return;
     }
 
@@ -48,11 +52,11 @@ export default function ViewWarranties({ contractId }: ViewWarrantiesProps) {
         setWarranty(result);
         setError(null);
       } else {
-        setError('Warranty not found. Please check the ID and try again.');
+        setError("Warranty not found. Please check the ID and try again.");
       }
     } catch (err) {
-      console.error('Error fetching warranty:', err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch warranty');
+      console.error("Error fetching warranty:", err);
+      setError(err instanceof Error ? err.message : "Failed to fetch warranty");
     } finally {
       setLoading(false);
     }
@@ -60,18 +64,20 @@ export default function ViewWarranties({ contractId }: ViewWarrantiesProps) {
 
   const handleSearchByOwner = async () => {
     if (!client) {
-      setError('Contract ID not configured. Please set it in Settings.');
+      setError("Contract ID not configured. Please set it in Settings.");
       return;
     }
 
     if (!owner.trim()) {
-      setError('Please enter an owner address');
+      setError("Please enter an owner address");
       return;
     }
 
     // Validate Stellar address format
-    if (!owner.trim().startsWith('G') || owner.trim().length !== 56) {
-      setError('Invalid Stellar address format. Address must start with G and be 56 characters long.');
+    if (!owner.trim().startsWith("G") || owner.trim().length !== 56) {
+      setError(
+        "Invalid Stellar address format. Address must start with G and be 56 characters long."
+      );
       return;
     }
 
@@ -85,11 +91,13 @@ export default function ViewWarranties({ contractId }: ViewWarrantiesProps) {
         setWarranties(result);
         setError(null);
       } else {
-        setError('No warranties found for this owner.');
+        setError("No warranties found for this owner.");
       }
     } catch (err) {
-      console.error('Error fetching warranties:', err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch warranties');
+      console.error("Error fetching warranties:", err);
+      setError(
+        err instanceof Error ? err.message : "Failed to fetch warranties"
+      );
     } finally {
       setLoading(false);
     }
@@ -105,31 +113,34 @@ export default function ViewWarranties({ contractId }: ViewWarrantiesProps) {
 
         <div className="flex gap-4 mb-6">
           <button
-            onClick={() => setViewMode('id')}
+            onClick={() => setViewMode("id")}
             className={`px-4 py-2 rounded-lg font-medium ${
-              viewMode === 'id'
-                ? 'bg-primary-600 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              viewMode === "id"
+                ? "bg-primary-600 text-white"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
             }`}
           >
             Search by ID
           </button>
           <button
-            onClick={() => setViewMode('owner')}
+            onClick={() => setViewMode("owner")}
             className={`px-4 py-2 rounded-lg font-medium ${
-              viewMode === 'owner'
-                ? 'bg-primary-600 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              viewMode === "owner"
+                ? "bg-primary-600 text-white"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
             }`}
           >
             Search by Owner
           </button>
         </div>
 
-        {viewMode === 'id' ? (
+        {viewMode === "id" ? (
           <div className="space-y-4">
             <div>
-              <label htmlFor="warrantyId" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="warrantyId"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Warranty ID
               </label>
               <div className="flex gap-2">
@@ -155,7 +166,10 @@ export default function ViewWarranties({ contractId }: ViewWarrantiesProps) {
         ) : (
           <div className="space-y-4">
             <div>
-              <label htmlFor="owner" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="owner"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Owner Address
               </label>
               <div className="flex gap-2">
@@ -191,27 +205,49 @@ export default function ViewWarranties({ contractId }: ViewWarrantiesProps) {
         <div className="bg-white rounded-lg shadow-md p-6">
           <div className="flex items-center gap-2 mb-4">
             <Eye className="w-5 h-5 text-primary-600" />
-            <h3 className="text-xl font-bold text-gray-900">Warranty Details</h3>
+            <h3 className="text-xl font-bold text-gray-900">
+              Warranty Details
+            </h3>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-3">
               <div>
-                <label className="text-sm font-medium text-gray-500">Product Name</label>
+                <label className="text-sm font-medium text-gray-500">
+                  Product Name
+                </label>
                 <p className="text-lg font-semibold">{warranty.product_name}</p>
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-500">Serial Number</label>
+                <label className="text-sm font-medium text-gray-500">
+                  Serial Number
+                </label>
                 <p className="text-lg">{warranty.serial_number}</p>
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-500">Manufacturer</label>
+                <label className="text-sm font-medium text-gray-500">
+                  Manufacturer
+                </label>
                 <p className="text-lg">{warranty.manufacturer}</p>
               </div>
             </div>
             <div className="space-y-3">
               <div>
-                <label className="text-sm font-medium text-gray-500">Status</label>
-                <span className={`inline-block px-3 py-1 rounded-full border ${getStatusColor(warranty.status as WarrantyStatus)}`}>
+                <label className="text-sm font-medium text-gray-500">
+                  Owner Address
+                </label>
+                <p className="text-lg font-mono text-sm break-all">
+                  {warranty.owner}
+                </p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-500">
+                  Status
+                </label>
+                <span
+                  className={`inline-block px-3 py-1 rounded-full border ${getStatusColor(
+                    warranty.status as WarrantyStatus
+                  )}`}
+                >
                   {warranty.status}
                 </span>
               </div>
@@ -227,7 +263,9 @@ export default function ViewWarranties({ contractId }: ViewWarrantiesProps) {
                   <Calendar className="w-4 h-4" />
                   Expiration Date
                 </label>
-                <p className="text-lg">{formatDate(warranty.expiration_date)}</p>
+                <p className="text-lg">
+                  {formatDate(warranty.expiration_date)}
+                </p>
               </div>
             </div>
           </div>
@@ -236,7 +274,9 @@ export default function ViewWarranties({ contractId }: ViewWarrantiesProps) {
 
       {warranties.length > 0 && (
         <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-xl font-bold text-gray-900 mb-4">Owner's Warranties ({warranties.length})</h3>
+          <h3 className="text-xl font-bold text-gray-900 mb-4">
+            Owner's Warranties ({warranties.length})
+          </h3>
           <div className="space-y-4">
             {warranties.map((warranty) => (
               <div
@@ -246,9 +286,15 @@ export default function ViewWarranties({ contractId }: ViewWarrantiesProps) {
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-2">
                     <Package className="w-5 h-5 text-primary-600" />
-                    <span className="font-medium text-lg">Warranty ID: {warranty.id}</span>
+                    <span className="font-medium text-lg">
+                      Warranty ID: {warranty.id}
+                    </span>
                   </div>
-                  <span className={`px-3 py-1 rounded-full border text-sm ${getStatusColor(warranty.status as WarrantyStatus)}`}>
+                  <span
+                    className={`px-3 py-1 rounded-full border text-sm ${getStatusColor(
+                      warranty.status as WarrantyStatus
+                    )}`}
+                  >
                     {warranty.status}
                   </span>
                 </div>
@@ -263,7 +309,9 @@ export default function ViewWarranties({ contractId }: ViewWarrantiesProps) {
                   </div>
                   <div>
                     <span className="text-gray-500">Expires:</span>
-                    <p className="font-medium">{formatDate(warranty.expiration_date)}</p>
+                    <p className="font-medium">
+                      {formatDate(warranty.expiration_date)}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -274,4 +322,3 @@ export default function ViewWarranties({ contractId }: ViewWarrantiesProps) {
     </div>
   );
 }
-

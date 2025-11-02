@@ -44,10 +44,6 @@ export class WarrantyTrackerClient {
     args: xdr.ScVal[]
   ): Promise<xdr.ScVal> {
     try {
-      console.log("[Soroban] Starting read-only contract call:", {
-        method,
-        argsCount: args.length,
-      });
 
       // For read-only calls, we can use a dummy account since we're not sending
       // We just need it to build the transaction for simulation
@@ -66,7 +62,6 @@ export class WarrantyTrackerClient {
         .setTimeout(TimeoutInfinite)
         .build();
 
-      console.log("[Soroban] Simulating read-only transaction...");
       const simResponse = await this.rpc.simulateTransaction(tx);
 
       if ("error" in simResponse || (simResponse as any).errorResult) {
@@ -78,7 +73,6 @@ export class WarrantyTrackerClient {
         throw new Error(`Read operation failed: ${JSON.stringify(error)}`);
       }
 
-      console.log("[Soroban] Read simulation successful");
 
       // Extract result from simulation
       if (
@@ -87,8 +81,6 @@ export class WarrantyTrackerClient {
         (simResponse as any).result?.retval
       ) {
         const simResult = (simResponse as any).result.retval;
-        console.log("[Soroban] ✓ Extracting result from simulation...");
-        console.log("[Soroban] Simulation result type:", typeof simResult);
 
         // Convert the result to ScVal
         let result: xdr.ScVal;
@@ -134,7 +126,6 @@ export class WarrantyTrackerClient {
           );
         }
 
-        console.log("[Soroban] ✓ Read operation complete");
         return result;
       } else {
         throw new Error("No result in simulation response");
@@ -153,11 +144,6 @@ export class WarrantyTrackerClient {
     signerAddress: string
   ): Promise<xdr.ScVal> {
     try {
-      console.log("[Soroban] Starting contract invocation:", {
-        method,
-        signerAddress,
-        argsCount: args.length,
-      });
 
       // Get the current account from Horizon server
       // For testnet: https://horizon-testnet.stellar.org
@@ -178,14 +164,9 @@ export class WarrantyTrackerClient {
       }
       const horizon = new Horizon.Server(horizonUrl);
 
-      console.log("[Soroban] Loading account from Horizon:", signerAddress);
       const accountResponse = await horizon.loadAccount(signerAddress);
       const sourceAccount = new Account(
         signerAddress,
-        accountResponse.sequenceNumber()
-      );
-      console.log(
-        "[Soroban] Account loaded. Sequence:",
         accountResponse.sequenceNumber()
       );
 
@@ -198,13 +179,8 @@ export class WarrantyTrackerClient {
         .addOperation(contractOp)
         .setTimeout(TimeoutInfinite)
         .build();
-      console.log("[Soroban] Transaction built:", {
-        operations: tx.operations.length,
-        fee: tx.fee,
-      });
 
       // Simulate the transaction first
-      console.log("[Soroban] Simulating transaction...");
       const simResponse = await this.rpc.simulateTransaction(tx);
       if ("error" in simResponse || (simResponse as any).errorResult) {
         const error =
@@ -216,18 +192,9 @@ export class WarrantyTrackerClient {
           `Transaction simulation failed: ${JSON.stringify(error)}`
         );
       }
-      console.log("[Soroban] Simulation successful:", {
-        cost: (simResponse as any).cost,
-        result: !!(simResponse as any).result,
-      });
 
       // Prepare the transaction (adds fees)
-      console.log("[Soroban] Preparing transaction...");
       const preparedTx = await this.rpc.prepareTransaction(tx);
-      console.log("[Soroban] Transaction prepared:", {
-        fee: preparedTx.fee,
-        operations: preparedTx.operations.length,
-      });
 
       // Validate simulation response
       if (!simResponse || !("result" in simResponse && simResponse.result)) {
@@ -237,7 +204,6 @@ export class WarrantyTrackerClient {
 
       // For Soroban transactions, we need to assemble FIRST (add auth entries)
       // Then sign the assembled transaction
-      console.log("[Soroban] Assembling transaction with auth entries...");
       let assembledTx: any;
       try {
         // assembleTransaction uses the prepared transaction and adds auth entries from simulation
@@ -248,11 +214,6 @@ export class WarrantyTrackerClient {
 
         // Build the transaction from the builder
         assembledTx = assembledTxBuilder.build();
-        console.log("[Soroban] Transaction assembled:", {
-          operations: assembledTx.operations.length,
-          fee: assembledTx.fee,
-          hasSorobanData: !!(assembledTx as any).sorobanData,
-        });
       } catch (assembleError) {
         console.error("[Soroban] Assemble failed:", assembleError);
         throw new Error(
@@ -267,12 +228,8 @@ export class WarrantyTrackerClient {
 
       // Now sign the ASSEMBLED transaction (with auth entries included)
       // Convert assembled transaction to XDR for signing
-      console.log("[Soroban] Converting to XDR for signing...");
       const txToSign = assembledTx.toXDR();
-      console.log("[Soroban] XDR length:", txToSign.length);
-
       // Sign with Freighter
-      console.log("[Soroban] Signing with Freighter...");
       const signedTxResult = await signTransaction(txToSign, {
         networkPassphrase: this.config.networkPassphrase,
       });
@@ -289,33 +246,16 @@ export class WarrantyTrackerClient {
         console.error("[Soroban] No signed XDR returned from Freighter");
         throw new Error("Transaction was not signed");
       }
-      console.log(
-        "[Soroban] Transaction signed. XDR length:",
-        signedTxResult.signedTxXdr.length
-      );
 
       // For Soroban transactions with auth entries, parse the signed envelope
       // The "Bad union switch: 4" error occurs when trying to parse Soroban-specific envelope structures
-      console.log("[Soroban] Parsing signed transaction envelope...");
       let signedTransaction: any;
       try {
         // First, check if we can parse it as a standard transaction envelope
-        console.log(
-          "[Soroban] Attempting to parse with TransactionBuilder.fromXDR..."
-        );
-        console.log(
-          "[Soroban] Signed XDR length:",
-          signedTxResult.signedTxXdr.length
-        );
-        console.log(
-          "[Soroban] Network passphrase:",
-          this.config.networkPassphrase
-        );
         signedTransaction = TransactionBuilder.fromXDR(
           signedTxResult.signedTxXdr,
           this.config.networkPassphrase
         );
-        console.log("[Soroban] ✓ Successfully parsed signed transaction");
       } catch (parseError) {
         const errorMsg =
           parseError instanceof Error ? parseError.message : String(parseError);
@@ -336,96 +276,42 @@ export class WarrantyTrackerClient {
           errorMsg.includes("Bad union switch") ||
           errorMsg.includes("switch: 4")
         ) {
-          console.log(
-            "[Soroban] Detected 'Bad union switch: 4' error - handling Soroban envelope..."
-          );
           // The envelope has Soroban-specific structures that can't be parsed with TransactionBuilder.fromXDR
           // We already have the assembled transaction with auth entries
           // We need to apply the signature from the signed envelope to the assembled transaction
           try {
-            console.log(
-              "[Soroban] Parsing envelope manually to extract signature..."
-            );
             const signedEnvelope = xdr.TransactionEnvelope.fromXDR(
               signedTxResult.signedTxXdr,
               "base64"
             );
-            console.log("[Soroban] ✓ Envelope parsed successfully");
 
             // Extract signature from envelope
             let signature: any = null;
             const envType = signedEnvelope.switch().value;
-            const envTypeName = signedEnvelope.switch().name;
-            console.log(
-              "[Soroban] Envelope type:",
-              envTypeName,
-              `(${envType})`
-            );
 
             if (envType === xdr.EnvelopeType.envelopeTypeTx().value) {
-              console.log("[Soroban] Processing envelopeTypeTx (v1)...");
               const v1 = signedEnvelope.v1();
-              console.log("[Soroban] V1 envelope exists:", !!v1);
-              if (v1) {
-                console.log(
-                  "[Soroban] Signatures count:",
-                  v1.signatures().length
-                );
-                if (v1.signatures().length > 0) {
-                  signature = v1.signatures()[0];
-                  console.log(
-                    "[Soroban] ✓ Extracted signature from v1 envelope"
-                  );
-                } else {
-                  console.warn("[Soroban] No signatures found in v1 envelope");
-                }
+              if (v1 && v1.signatures().length > 0) {
+                signature = v1.signatures()[0];
+              } else {
+                console.warn("[Soroban] No signatures found in v1 envelope");
               }
             } else if (envType === xdr.EnvelopeType.envelopeTypeTxV0().value) {
-              console.log("[Soroban] Processing envelopeTypeTxV0...");
               const v0 = signedEnvelope.v0();
-              console.log("[Soroban] V0 envelope exists:", !!v0);
-              if (v0) {
-                console.log(
-                  "[Soroban] Signatures count:",
-                  v0.signatures().length
-                );
-                if (v0.signatures().length > 0) {
-                  signature = v0.signatures()[0];
-                  console.log(
-                    "[Soroban] ✓ Extracted signature from v0 envelope"
-                  );
-                } else {
-                  console.warn("[Soroban] No signatures found in v0 envelope");
-                }
+              if (v0 && v0.signatures().length > 0) {
+                signature = v0.signatures()[0];
+              } else {
+                console.warn("[Soroban] No signatures found in v0 envelope");
               }
             } else {
-              console.warn("[Soroban] Unsupported envelope type:", envTypeName);
+              console.warn("[Soroban] Unsupported envelope type");
             }
 
             // Use the assembled transaction and apply the signature
-            console.log(
-              "[Soroban] Applying signature to assembled transaction..."
-            );
-            console.log(
-              "[Soroban] Assembled transaction type:",
-              typeof assembledTx
-            );
-            console.log(
-              "[Soroban] Assembled transaction has signatures array:",
-              !!assembledTx.signatures
-            );
             const finalTx = assembledTx;
             if (signature) {
               if (finalTx.signatures) {
-                console.log(
-                  "[Soroban] Current signatures count:",
-                  finalTx.signatures.length
-                );
                 finalTx.signatures.push(signature);
-                console.log(
-                  "[Soroban] ✓ Signature applied. New count:",
-                  finalTx.signatures.length
-                );
               } else {
                 console.error(
                   "[Soroban] ✗ Assembled transaction has no signatures array!"
@@ -443,9 +329,6 @@ export class WarrantyTrackerClient {
             }
 
             signedTransaction = finalTx;
-            console.log(
-              "[Soroban] ✓ Using assembled transaction with manually applied signature"
-            );
           } catch (sigError) {
             console.error("[Soroban] ✗ Failed to extract signature:", sigError);
             if (sigError instanceof Error) {
@@ -475,21 +358,7 @@ export class WarrantyTrackerClient {
           "Failed to parse signed transaction: returned null or undefined"
         );
       }
-      console.log(
-        "[Soroban] ✓ Signed transaction ready. Type:",
-        typeof signedTransaction
-      );
-      console.log(
-        "[Soroban] Signed transaction has operations:",
-        !!signedTransaction.operations
-      );
-      console.log(
-        "[Soroban] Signed transaction operations count:",
-        signedTransaction.operations?.length || 0
-      );
-
       // Send the signed transaction with auth entries
-      console.log("[Soroban] Sending transaction to network...");
       const sendResponse = await this.rpc.sendTransaction(signedTransaction);
 
       if ("errorResult" in sendResponse) {
@@ -502,18 +371,9 @@ export class WarrantyTrackerClient {
         );
       }
 
-      console.log("[Soroban] ✓ Transaction sent. Hash:", sendResponse.hash);
-      console.log(
-        "[Soroban] Transaction status:",
-        (sendResponse as any).status
-      );
-
       // Use simulation result instead of waiting for getTransaction
       // The simulation result matches the actual transaction result
       // and avoids the "Bad union switch: 4" error when parsing getTransaction responses
-      console.log(
-        "[Soroban] Using simulation result (matches transaction result)..."
-      );
 
       // Extract result from simulation response
       // This is safe because simulation returns the same result as the actual transaction
@@ -523,11 +383,6 @@ export class WarrantyTrackerClient {
         (simResponse as any).result?.retval
       ) {
         const simResult = (simResponse as any).result.retval;
-        console.log(
-          "[Soroban] ✓ Extracting result from simulation response..."
-        );
-        console.log("[Soroban] Simulation result type:", typeof simResult);
-        console.log("[Soroban] Simulation result:", simResult);
 
         // The retval is likely an object (ScVal structure), not a string
         // Use scValToNative to convert it to native JavaScript, then reconstruct ScVal
@@ -536,27 +391,16 @@ export class WarrantyTrackerClient {
         try {
           // If it's already a ScVal object, use it directly
           if (simResult instanceof xdr.ScVal) {
-            console.log("[Soroban] ✓ Result is already a ScVal object");
             result = simResult;
           }
           // If it's a string (XDR base64), parse it
           else if (typeof simResult === "string") {
-            console.log("[Soroban] Result is a string, parsing as XDR...");
             result = xdr.ScVal.fromXDR(simResult, "base64");
-            console.log(
-              "[Soroban] ✓ Successfully parsed result from base64 string"
-            );
           }
           // If it's an object, use scValToNative to convert it to native JavaScript
           else if (typeof simResult === "object" && simResult !== null) {
-            console.log(
-              "[Soroban] Result is an object, converting to native value..."
-            );
-
             // Use scValToNative to convert the ScVal-like object to native JavaScript
             const nativeValue = scValToNative(simResult);
-            console.log("[Soroban] ✓ Converted to native value:", nativeValue);
-            console.log("[Soroban] Native value type:", typeof nativeValue);
 
             // Convert the native value back to ScVal
             // For u64 (which is what register_warranty returns), it should be a string, number, or bigint
@@ -567,17 +411,9 @@ export class WarrantyTrackerClient {
               result = xdr.ScVal.scvU64(
                 xdr.Uint64.fromString(nativeValue.toString())
               );
-              console.log(
-                "[Soroban] ✓ Converted native value to ScVal u64:",
-                nativeValue.toString()
-              );
             } else if (typeof nativeValue === "bigint") {
               result = xdr.ScVal.scvU64(
                 xdr.Uint64.fromString(nativeValue.toString())
-              );
-              console.log(
-                "[Soroban] ✓ Converted bigint to ScVal u64:",
-                nativeValue.toString()
               );
             } else {
               console.error(
@@ -594,7 +430,6 @@ export class WarrantyTrackerClient {
             );
           }
 
-          console.log("[Soroban] ✓ Contract invocation complete");
           return result;
         } catch (error) {
           const errorMsg =
@@ -615,11 +450,6 @@ export class WarrantyTrackerClient {
         // No result in simulation - this might be a write-only operation
         console.warn(
           "[Soroban] ⚠ No result in simulation response. This might be expected for write operations."
-        );
-        console.log(
-          "[Soroban] Transaction was sent successfully (hash: " +
-            sendResponse.hash +
-            ")"
         );
         return xdr.ScVal.scvBool(true);
       }
@@ -721,7 +551,6 @@ export class WarrantyTrackerClient {
 
   async getWarranty(warrantyId: string): Promise<WarrantyData | null> {
     try {
-      console.log("[getWarranty] Fetching warranty:", warrantyId);
 
       const args = [xdr.ScVal.scvU64(xdr.Uint64.fromString(warrantyId))];
       const simResponse = await this.rpc.simulateTransaction(
@@ -810,7 +639,6 @@ export class WarrantyTrackerClient {
             "",
         };
 
-        console.log("[getWarranty] ✓ Warranty fetched successfully");
         return data;
       }
 
@@ -823,10 +651,6 @@ export class WarrantyTrackerClient {
 
   async getWarrantiesByOwner(owner: string): Promise<WarrantyData[]> {
     try {
-      console.log(
-        "[getWarrantiesByOwner] Fetching warranties for owner:",
-        owner
-      );
 
       // Validate address format
       if (!owner || !owner.startsWith("G") || owner.length !== 56) {
@@ -888,11 +712,6 @@ export class WarrantyTrackerClient {
         // If it's an array of warranty IDs (u64), return them as strings
         const warrantyIds = warrantiesData.map(
           (id: any) => id?.toString() || String(id)
-        );
-        console.log(
-          "[getWarrantiesByOwner] ✓ Found",
-          warrantyIds.length,
-          "warranties"
         );
 
         // Fetch full warranty data for each ID
