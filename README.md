@@ -55,6 +55,43 @@ The compiled WASM file will be located at:
 target/wasm32v1-none/release/warranty_tracker.wasm
 ```
 
+## 🚀 Deployment
+
+To deploy the contract to the Soroban network:
+
+1. **Build the contract** (see above)
+2. **Set up a Stellar account** on testnet (testnet)
+3. **Deploy the contract** using Stellar CLI
+4. **Get the Contract ID** from the deployment output
+5. **Configure your frontend** with the Contract ID
+
+For detailed deployment instructions, see [DEPLOYMENT.md](./DEPLOYMENT.md).
+
+### Quick Deploy to testnet
+
+```bash
+# 1. Generate account or add existing one
+stellar keys generate --global testnet --key deployer
+# OR add existing account:
+stellar keys add deployer --secret-key <your-secret-key>
+
+# 2. Get testnet funds
+stellar keys fund deployer --network testnet
+# OR manually:
+curl "https://friendbot-testnet.stellar.org/?addr=<YOUR_PUBLIC_KEY>"
+
+# 3. Build the contract
+cd contracts/warranty-tracker && make build
+
+# 4. Deploy (replace 'deployer' with your account name)
+stellar contract deploy \
+  --wasm target/wasm32v1-none/release/warranty_tracker.wasm \
+  --source deployer \
+  --network testnet
+
+# 5. Copy the Contract ID and use it in your frontend Settings!
+```
+
 ## 🧪 Testing
 
 Run the test suite:
