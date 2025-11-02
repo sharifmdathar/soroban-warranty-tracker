@@ -414,3 +414,92 @@ fn test_register_expired_warranty() {
     let warranty = client.get_warranty(&warranty_id).unwrap();
     assert_eq!(warranty.status, WarrantyStatus::Expired);
 }
+
+#[test]
+fn test_set_to_active() {
+    let env = Env::default();
+    let base_timestamp: u64 = 1704067200;
+    let current_time = base_timestamp + 86400;
+    env.ledger().set(LedgerInfo {
+        timestamp: current_time,
+        protocol_version: 23,
+        sequence_number: 0,
+        network_id: [0; 32],
+        base_reserve: 1000000,
+        max_entry_ttl: 86400 * 365 * 10,      // 10 years
+        min_persistent_entry_ttl: 86400 * 30, // 30 days
+        min_temp_entry_ttl: 86400 * 7,        // 7 days
+    });
+
+    let contract_id = env.register(WarrantyTracker, ());
+    let client = WarrantyTrackerClient::new(&env, &contract_id);
+
+    let owner = Address::generate(&env);
+    let purchase_date = base_timestamp;
+    let expiration_date = current_time + 31536000;
+
+    env.mock_all_auths();
+
+    let warranty_id = client.register_warranty(
+        &owner,
+        &String::from_str(&env, "Product"),
+        &String::from_str(&env, "SN123"),
+        &String::from_str(&env, "Manufacturer"),
+        &purchase_date,
+        &expiration_date,
+    );
+
+    // First revoke it
+    client.revoke_warranty(&warranty_id);
+    let warranty = client.get_warranty(&warranty_id).unwrap();
+    assert_eq!(warranty.status, WarrantyStatus::Revoked);
+
+    // Then set it back to active
+    client.set_to_active(&warranty_id);
+    let warranty = client.get_warranty(&warranty_id).unwrap();
+    assert_eq!(warranty.status, WarrantyStatus::Active);
+}
+
+#[test]
+fn test_set_to_expired() {
+    let env = Env::default();
+    let base_timestamp: u64 = 1704067200;
+    let current_time = base_timestamp + 86400;
+    env.ledger().set(LedgerInfo {
+        timestamp: current_time,
+        protocol_version: 23,
+        sequence_number: 0,
+        network_id: [0; 32],
+        base_reserve: 1000000,
+        max_entry_ttl: 86400 * 365 * 10,      // 10 years
+        min_persistent_entry_ttl: 86400 * 30, // 30 days
+        min_temp_entry_ttl: 86400 * 7,        // 7 days
+    });
+
+    let contract_id = env.register(WarrantyTracker, ());
+    let client = WarrantyTrackerClient::new(&env, &contract_id);
+
+    let owner = Address::generate(&env);
+    let purchase_date = base_timestamp;
+    let expiration_date = current_time + 31536000;
+
+    env.mock_all_auths();
+
+    let warranty_id = client.register_warranty(
+        &owner,
+        &String::from_str(&env, "Product"),
+        &String::from_str(&env, "SN123"),
+        &String::from_str(&env, "Manufacturer"),
+        &purchase_date,
+        &expiration_date,
+    );
+
+    // Initially active
+    let warranty = client.get_warranty(&warranty_id).unwrap();
+    assert_eq!(warranty.status, WarrantyStatus::Active);
+
+    // Set it to expired
+    client.set_to_expired(&warranty_id);
+    let warranty = client.get_warranty(&warranty_id).unwrap();
+    assert_eq!(warranty.status, WarrantyStatus::Expired);
+}

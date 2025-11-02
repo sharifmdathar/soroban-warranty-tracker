@@ -71,17 +71,17 @@ For detailed deployment instructions, see [DEPLOYMENT.md](./DEPLOYMENT.md).
 
 ```bash
 # 1. Generate account or add existing one
-stellar keys generate --global testnet --key deployer
-# OR add existing account:
+stellar keys generate deployer --network testnet --fund
+#    OR add existing account:
 stellar keys add deployer --secret-key <your-secret-key>
 
 # 2. Get testnet funds
 stellar keys fund deployer --network testnet
-# OR manually:
+#    OR manually:
 curl "https://friendbot-testnet.stellar.org/?addr=<YOUR_PUBLIC_KEY>"
 
 # 3. Build the contract
-cd contracts/warranty-tracker && make build
+cd contracts/warranty-tracker && stellar contract build
 
 # 4. Deploy (replace 'deployer' with your account name)
 stellar contract deploy \
@@ -295,24 +295,12 @@ let is_expired = contract.is_warranty_expired(&warranty_id);
 Format the code:
 
 ```bash
-make fmt
-```
-
-Or:
-
-```bash
 cargo fmt --all
 ```
 
 ### 🧹 Clean Build Artifacts
 
 Clean build artifacts:
-
-```bash
-make clean
-```
-
-Or:
 
 ```bash
 cargo clean

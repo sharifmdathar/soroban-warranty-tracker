@@ -2,7 +2,6 @@ import {
   isConnected,
   getAddress,
   requestAccess,
-  signTransaction,
 } from "@stellar/freighter-api";
 
 export interface WalletConnection {

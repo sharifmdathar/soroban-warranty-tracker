@@ -26,7 +26,6 @@ export default function ViewWarranties({ contractId }: ViewWarrantiesProps) {
     try {
       return new WarrantyTrackerClient({ contractId });
     } catch (err) {
-      console.error("Failed to create WarrantyTrackerClient:", err);
       return null;
     }
   }, [contractId]);
@@ -55,7 +54,6 @@ export default function ViewWarranties({ contractId }: ViewWarrantiesProps) {
         setError("Warranty not found. Please check the ID and try again.");
       }
     } catch (err) {
-      console.error("Error fetching warranty:", err);
       setError(err instanceof Error ? err.message : "Failed to fetch warranty");
     } finally {
       setLoading(false);
@@ -94,7 +92,6 @@ export default function ViewWarranties({ contractId }: ViewWarrantiesProps) {
         setError("No warranties found for this owner.");
       }
     } catch (err) {
-      console.error("Error fetching warranties:", err);
       setError(
         err instanceof Error ? err.message : "Failed to fetch warranties"
       );

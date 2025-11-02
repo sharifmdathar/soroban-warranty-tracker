@@ -35,116 +35,12 @@ export class WarrantyTrackerClient {
     this.rpc = new rpc.Server(this.config.rpcUrl);
   }
 
-  /**
-   * Read-only contract call - no transaction signing required
-   * Uses simulateTransaction to get contract state
-   */
-  private async readContract(
-    method: string,
-    args: xdr.ScVal[]
-  ): Promise<xdr.ScVal> {
-    try {
-
-      // For read-only calls, we can use a dummy account since we're not sending
-      // We just need it to build the transaction for simulation
-      const dummyAccount = new Account(
-        "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF",
-        "0"
-      );
-
-      // Build the transaction (won't be sent)
-      const contractOp = this.contract.call(method, ...args);
-      const tx = new TransactionBuilder(dummyAccount, {
-        fee: "100",
-        networkPassphrase: this.config.networkPassphrase,
-      })
-        .addOperation(contractOp)
-        .setTimeout(TimeoutInfinite)
-        .build();
-
-      const simResponse = await this.rpc.simulateTransaction(tx);
-
-      if ("error" in simResponse || (simResponse as any).errorResult) {
-        const error =
-          "error" in simResponse
-            ? simResponse.error
-            : (simResponse as any).errorResult;
-        console.error("[Soroban] Read simulation failed:", error);
-        throw new Error(`Read operation failed: ${JSON.stringify(error)}`);
-      }
-
-
-      // Extract result from simulation
-      if (
-        simResponse &&
-        "result" in simResponse &&
-        (simResponse as any).result?.retval
-      ) {
-        const simResult = (simResponse as any).result.retval;
-
-        // Convert the result to ScVal
-        let result: xdr.ScVal;
-
-        if (simResult instanceof xdr.ScVal) {
-          result = simResult;
-        } else if (typeof simResult === "string") {
-          result = xdr.ScVal.fromXDR(simResult, "base64");
-        } else if (typeof simResult === "object" && simResult !== null) {
-          // Use scValToNative to convert, then reconstruct ScVal
-          const nativeValue = scValToNative(simResult);
-
-          // The result type depends on what the contract returns
-          // For warranty data, it will be a struct/object
-          // We'll return it as-is for now and let the caller handle conversion
-          // For now, wrap it in a ScVal if needed
-          if (typeof nativeValue === "object") {
-            // For structs, we can't easily reconstruct ScVal, so we'll need to
-            // work with the native value directly or convert it back
-            // For now, let's try to use the original object as ScVal-like
-            throw new Error(
-              "Complex return types from read operations need special handling. " +
-                "Use scValToNative directly on the simulation result."
-            );
-          }
-
-          // For primitive types
-          if (
-            typeof nativeValue === "string" ||
-            typeof nativeValue === "number"
-          ) {
-            result = xdr.ScVal.scvU64(
-              xdr.Uint64.fromString(nativeValue.toString())
-            );
-          } else {
-            throw new Error(
-              `Unexpected native value type: ${typeof nativeValue}`
-            );
-          }
-        } else {
-          throw new Error(
-            `Unexpected simulation result type: ${typeof simResult}`
-          );
-        }
-
-        return result;
-      } else {
-        throw new Error("No result in simulation response");
-      }
-    } catch (error) {
-      if (error instanceof Error) {
-        throw error;
-      }
-      throw new Error("Failed to read from contract");
-    }
-  }
-
   private async invokeContract(
     method: string,
     args: xdr.ScVal[],
     signerAddress: string
   ): Promise<xdr.ScVal> {
     try {
-
       // Get the current account from Horizon server
       // For testnet: https://horizon-testnet.stellar.org
       // For futurenet: https://horizon-futurenet.stellar.org
@@ -181,16 +77,67 @@ export class WarrantyTrackerClient {
         .build();
 
       // Simulate the transaction first
-      const simResponse = await this.rpc.simulateTransaction(tx);
+      let simResponse: any;
+      try {
+        simResponse = await this.rpc.simulateTransaction(tx);
+      } catch (simErr) {
+        simResponse = { error: simErr };
+      }
+
       if ("error" in simResponse || (simResponse as any).errorResult) {
         const error =
           "error" in simResponse
             ? simResponse.error
             : (simResponse as any).errorResult;
-        console.error("[Soroban] Simulation failed:", error);
-        throw new Error(
-          `Transaction simulation failed: ${JSON.stringify(error)}`
-        );
+
+        // Extract error string for checking
+        const errorStr =
+          typeof error === "string" ? error : JSON.stringify(error);
+
+        if (
+          method === "update_status" &&
+          errorStr.includes("UnreachableCodeReached")
+        ) {
+          throw new Error(
+            `Failed to update warranty status: The contract simulation is failing due to an enum parameter encoding issue. ` +
+              `The contract code allows status changes, but Soroban's simulation cannot properly handle the enum parameter. ` +
+              `This is a known limitation with contracttype enums during simulation. ` +
+              `Please use the "Revoke Warranty" button for Revoked status, which uses a different method that works.`
+          );
+        }
+
+        // Extract more detailed error information for other methods
+        let errorMessage = `Transaction simulation failed: ${JSON.stringify(
+          error
+        )}`;
+
+        // Check for specific error types
+        if (errorStr.includes("UnreachableCodeReached")) {
+          // This typically means the contract panicked
+          if (method === "revoke_warranty") {
+            errorMessage = `Warranty not found or access denied. The warranty may not exist, or you may not be the owner. Please verify: 1) The warranty ID is correct, 2) You are the owner of this warranty, 3) The warranty exists in the contract.`;
+          } else {
+            errorMessage = `Contract execution failed: ${error}. This usually means the contract panicked due to invalid input or state.`;
+          }
+        } else if (typeof error === "object" && error !== null) {
+          // Try to extract error message from event log
+          if ("events" in error || "eventLog" in error) {
+            const events =
+              ("events" in error ? error.events : error.eventLog) || [];
+            const errorEvent = events.find(
+              (e: any) =>
+                e &&
+                (e.topics?.includes("error") || e.topics?.includes("Error"))
+            );
+            if (errorEvent) {
+              errorMessage = `Contract error: ${JSON.stringify(
+                errorEvent.data || errorEvent
+              )}`;
+            }
+          }
+        }
+
+        throw new Error(errorMessage);
       }
 
       // Prepare the transaction (adds fees)
@@ -198,7 +145,6 @@ export class WarrantyTrackerClient {
 
       // Validate simulation response
       if (!simResponse || !("result" in simResponse && simResponse.result)) {
-        console.error("[Soroban] Invalid simulation response:", simResponse);
         throw new Error("Invalid simulation response: missing result");
       }
 
@@ -215,14 +161,12 @@ export class WarrantyTrackerClient {
         // Build the transaction from the builder
         assembledTx = assembledTxBuilder.build();
       } catch (assembleError) {
-        console.error("[Soroban] Assemble failed:", assembleError);
         throw new Error(
           `Failed to assemble transaction: ${
             assembleError instanceof Error
               ? assembleError.message
               : String(assembleError)
-          }. ` +
-            `This might indicate an issue with the transaction structure or simulation response.`
+          }`
         );
       }
 
@@ -235,23 +179,16 @@ export class WarrantyTrackerClient {
       });
 
       if (signedTxResult.error) {
-        console.error(
-          "[Soroban] Freighter signing error:",
-          signedTxResult.error
-        );
         throw new Error(`Failed to sign transaction: ${signedTxResult.error}`);
       }
 
       if (!signedTxResult.signedTxXdr) {
-        console.error("[Soroban] No signed XDR returned from Freighter");
         throw new Error("Transaction was not signed");
       }
 
       // For Soroban transactions with auth entries, parse the signed envelope
-      // The "Bad union switch: 4" error occurs when trying to parse Soroban-specific envelope structures
       let signedTransaction: any;
       try {
-        // First, check if we can parse it as a standard transaction envelope
         signedTransaction = TransactionBuilder.fromXDR(
           signedTxResult.signedTxXdr,
           this.config.networkPassphrase
@@ -259,16 +196,6 @@ export class WarrantyTrackerClient {
       } catch (parseError) {
         const errorMsg =
           parseError instanceof Error ? parseError.message : String(parseError);
-        console.error("[Soroban] ✗ Failed to parse signed envelope:", errorMsg);
-        console.error(
-          "[Soroban] Error type:",
-          parseError instanceof Error
-            ? parseError.constructor.name
-            : typeof parseError
-        );
-        if (parseError instanceof Error) {
-          console.error("[Soroban] Error stack:", parseError.stack);
-        }
 
         // "Bad union switch: 4" means envelopeTypeScpvalue - this is a Soroban-specific structure
         // When this happens, we need to use the assembled transaction and apply the signature manually
@@ -276,9 +203,6 @@ export class WarrantyTrackerClient {
           errorMsg.includes("Bad union switch") ||
           errorMsg.includes("switch: 4")
         ) {
-          // The envelope has Soroban-specific structures that can't be parsed with TransactionBuilder.fromXDR
-          // We already have the assembled transaction with auth entries
-          // We need to apply the signature from the signed envelope to the assembled transaction
           try {
             const signedEnvelope = xdr.TransactionEnvelope.fromXDR(
               signedTxResult.signedTxXdr,
@@ -293,18 +217,12 @@ export class WarrantyTrackerClient {
               const v1 = signedEnvelope.v1();
               if (v1 && v1.signatures().length > 0) {
                 signature = v1.signatures()[0];
-              } else {
-                console.warn("[Soroban] No signatures found in v1 envelope");
               }
             } else if (envType === xdr.EnvelopeType.envelopeTypeTxV0().value) {
               const v0 = signedEnvelope.v0();
               if (v0 && v0.signatures().length > 0) {
                 signature = v0.signatures()[0];
-              } else {
-                console.warn("[Soroban] No signatures found in v0 envelope");
               }
-            } else {
-              console.warn("[Soroban] Unsupported envelope type");
             }
 
             // Use the assembled transaction and apply the signature
@@ -313,59 +231,32 @@ export class WarrantyTrackerClient {
               if (finalTx.signatures) {
                 finalTx.signatures.push(signature);
               } else {
-                console.error(
-                  "[Soroban] ✗ Assembled transaction has no signatures array!"
-                );
-                console.error(
-                  "[Soroban] Assembled transaction keys:",
-                  Object.keys(finalTx)
-                );
                 throw new Error(
-                  "Assembled transaction does not have a signatures array to append signature to"
+                  "Assembled transaction does not have a signatures array"
                 );
               }
-            } else {
-              console.warn("[Soroban] ⚠ No signature extracted from envelope!");
             }
 
             signedTransaction = finalTx;
           } catch (sigError) {
-            console.error("[Soroban] ✗ Failed to extract signature:", sigError);
-            if (sigError instanceof Error) {
-              console.error(
-                "[Soroban] Signature extraction error stack:",
-                sigError.stack
-              );
-            }
             throw new Error(
               `Failed to extract signature from Soroban envelope: ${
                 sigError instanceof Error ? sigError.message : String(sigError)
-              }. Original error: ${errorMsg}`
+              }`
             );
           }
         } else {
-          console.error(
-            "[Soroban] ✗ Unknown parse error (not Bad union switch):",
-            errorMsg
-          );
           throw new Error(`Failed to parse signed transaction: ${errorMsg}`);
         }
       }
 
       if (!signedTransaction) {
-        console.error("[Soroban] ✗ Signed transaction is null or undefined");
-        throw new Error(
-          "Failed to parse signed transaction: returned null or undefined"
-        );
+        throw new Error("Failed to parse signed transaction");
       }
       // Send the signed transaction with auth entries
       const sendResponse = await this.rpc.sendTransaction(signedTransaction);
 
       if ("errorResult" in sendResponse) {
-        console.error(
-          "[Soroban] ✗ Transaction send failed:",
-          sendResponse.errorResult
-        );
         throw new Error(
           `Transaction failed: ${JSON.stringify(sendResponse.errorResult)}`
         );
@@ -373,10 +264,6 @@ export class WarrantyTrackerClient {
 
       // Use simulation result instead of waiting for getTransaction
       // The simulation result matches the actual transaction result
-      // and avoids the "Bad union switch: 4" error when parsing getTransaction responses
-
-      // Extract result from simulation response
-      // This is safe because simulation returns the same result as the actual transaction
       if (
         simResponse &&
         "result" in simResponse &&
@@ -416,10 +303,6 @@ export class WarrantyTrackerClient {
                 xdr.Uint64.fromString(nativeValue.toString())
               );
             } else {
-              console.error(
-                "[Soroban] ✗ Unexpected native value type:",
-                typeof nativeValue
-              );
               throw new Error(
                 `Unexpected native value type: ${typeof nativeValue}`
               );
@@ -432,25 +315,11 @@ export class WarrantyTrackerClient {
 
           return result;
         } catch (error) {
-          const errorMsg =
-            error instanceof Error ? error.message : String(error);
-          console.error("[Soroban] ✗ Failed to extract result:", errorMsg);
-          console.error(
-            "[Soroban] Error stack:",
-            error instanceof Error ? error.stack : "N/A"
-          );
-
           // If we can't extract the result, but transaction succeeded, return success indicator
-          console.warn(
-            "[Soroban] ⚠ Cannot extract result, but transaction succeeded. Returning success indicator."
-          );
           return xdr.ScVal.scvBool(true);
         }
       } else {
         // No result in simulation - this might be a write-only operation
-        console.warn(
-          "[Soroban] ⚠ No result in simulation response. This might be expected for write operations."
-        );
         return xdr.ScVal.scvBool(true);
       }
     } catch (error) {
@@ -527,22 +396,9 @@ export class WarrantyTrackerClient {
       );
       return scValToNative(result).toString();
     } catch (err) {
-      console.error("[RegisterWarranty] ✗ Registration failed:", err);
-      if (err instanceof Error) {
-        console.error("[RegisterWarranty] Error message:", err.message);
-        console.error("[RegisterWarranty] Error stack:", err.stack);
-      }
       if (err instanceof Error && err.message.includes("address")) {
         throw new Error(
           "Invalid Stellar address. Please connect a valid wallet."
-        );
-      }
-      // Re-throw with more context if it's a Bad union switch error
-      if (err instanceof Error && err.message.includes("Bad union switch")) {
-        throw new Error(
-          `Transaction parsing error: ${err.message}. ` +
-            `This might indicate an issue with the transaction envelope structure. ` +
-            `Check the browser console for detailed logs.`
         );
       }
       throw err;
@@ -551,7 +407,6 @@ export class WarrantyTrackerClient {
 
   async getWarranty(warrantyId: string): Promise<WarrantyData | null> {
     try {
-
       const args = [xdr.ScVal.scvU64(xdr.Uint64.fromString(warrantyId))];
       const simResponse = await this.rpc.simulateTransaction(
         new TransactionBuilder(
@@ -570,11 +425,6 @@ export class WarrantyTrackerClient {
       );
 
       if ("error" in simResponse || (simResponse as any).errorResult) {
-        const error =
-          "error" in simResponse
-            ? simResponse.error
-            : (simResponse as any).errorResult;
-        console.error("[getWarranty] Error:", error);
         return null;
       }
 
@@ -582,7 +432,6 @@ export class WarrantyTrackerClient {
         !simResponse ||
         !("result" in simResponse && (simResponse as any).result?.retval)
       ) {
-        console.warn("[getWarranty] No result in simulation");
         return null;
       }
 
@@ -595,10 +444,6 @@ export class WarrantyTrackerClient {
       } else if (typeof simResult === "object" && simResult !== null) {
         warrantyData = scValToNative(simResult);
       } else {
-        console.error(
-          "[getWarranty] Unexpected result type:",
-          typeof simResult
-        );
         return null;
       }
 
@@ -644,14 +489,12 @@ export class WarrantyTrackerClient {
 
       return null;
     } catch (error) {
-      console.error("[getWarranty] ✗ Failed to fetch warranty:", error);
       return null;
     }
   }
 
   async getWarrantiesByOwner(owner: string): Promise<WarrantyData[]> {
     try {
-
       // Validate address format
       if (!owner || !owner.startsWith("G") || owner.length !== 56) {
         throw new Error("Invalid Stellar address format");
@@ -675,11 +518,6 @@ export class WarrantyTrackerClient {
       );
 
       if ("error" in simResponse || (simResponse as any).errorResult) {
-        const error =
-          "error" in simResponse
-            ? simResponse.error
-            : (simResponse as any).errorResult;
-        console.error("[getWarrantiesByOwner] Error:", error);
         return [];
       }
 
@@ -687,7 +525,6 @@ export class WarrantyTrackerClient {
         !simResponse ||
         !("result" in simResponse && (simResponse as any).result?.retval)
       ) {
-        console.warn("[getWarrantiesByOwner] No result in simulation");
         return [];
       }
 
@@ -700,10 +537,6 @@ export class WarrantyTrackerClient {
       } else if (typeof simResult === "object" && simResult !== null) {
         warrantiesData = scValToNative(simResult);
       } else {
-        console.error(
-          "[getWarrantiesByOwner] Unexpected result type:",
-          typeof simResult
-        );
         return [];
       }
 
@@ -728,10 +561,6 @@ export class WarrantyTrackerClient {
 
       return [];
     } catch (error) {
-      console.error(
-        "[getWarrantiesByOwner] ✗ Failed to fetch warranties:",
-        error
-      );
       return [];
     }
   }
@@ -753,11 +582,29 @@ export class WarrantyTrackerClient {
     status: WarrantyStatus,
     signerAddress: string
   ): Promise<void> {
-    const args = [
-      xdr.ScVal.scvU64(xdr.Uint64.fromString(warrantyId)),
-      xdr.ScVal.scvU32(Number(status)),
-    ];
-    await this.invokeContract("update_status", args, signerAddress);
+    // Use dedicated methods for each status to avoid enum parameter simulation issues
+    if (status === WarrantyStatus.Revoked) {
+      await this.revokeWarranty(warrantyId, signerAddress);
+      return;
+    } else if (status === WarrantyStatus.Active) {
+      await this.setToActive(warrantyId, signerAddress);
+      return;
+    } else if (status === WarrantyStatus.Expired) {
+      await this.setToExpired(warrantyId, signerAddress);
+      return;
+    } else {
+      throw new Error(`Invalid warranty status: ${status}`);
+    }
+  }
+
+  async setToActive(warrantyId: string, signerAddress: string): Promise<void> {
+    const args = [xdr.ScVal.scvU64(xdr.Uint64.fromString(warrantyId))];
+    await this.invokeContract("set_to_active", args, signerAddress);
+  }
+
+  async setToExpired(warrantyId: string, signerAddress: string): Promise<void> {
+    const args = [xdr.ScVal.scvU64(xdr.Uint64.fromString(warrantyId))];
+    await this.invokeContract("set_to_expired", args, signerAddress);
   }
 
   async revokeWarranty(
@@ -774,7 +621,7 @@ export class WarrantyTrackerClient {
     );
   }
 
-  async isWarrantyExpired(warrantyId: string): Promise<boolean> {
+  async isWarrantyExpired(_warrantyId: string): Promise<boolean> {
     throw new Error(
       "Read operations not fully implemented. Use a Soroban RPC client."
     );

@@ -134,12 +134,7 @@ function App() {
                   <TransferOwnership contractId={contractId} />
                 )}
                 {currentView === "status" && (
-                  <ManageStatus
-                    contractId={contractId}
-                    onSuccess={() => {
-                      console.log("Status updated");
-                    }}
-                  />
+                  <ManageStatus contractId={contractId} />
                 )}
               </>
             )}

@@ -248,6 +248,52 @@ impl WarrantyTracker {
             .set(&DataKey::WarrantyData, &warranty_map);
     }
 
+    /// Set warranty status to Active (only owner can set)
+    ///
+    /// # Arguments
+    /// - `env`: The environment
+    /// - `warranty_id`: The warranty ID to set to active
+    pub fn set_to_active(env: Env, warranty_id: u64) {
+        let mut warranty_map: Map<u64, WarrantyData> = env
+            .storage()
+            .instance()
+            .get(&DataKey::WarrantyData)
+            .expect("warranty storage not initialized");
+
+        let mut warranty: WarrantyData = warranty_map.get(warranty_id).expect("warranty not found");
+
+        warranty.owner.require_auth();
+
+        warranty.status = WarrantyStatus::Active;
+        warranty_map.set(warranty_id, warranty.clone());
+        env.storage()
+            .instance()
+            .set(&DataKey::WarrantyData, &warranty_map);
+    }
+
+    /// Set warranty status to Expired (only owner can set)
+    ///
+    /// # Arguments
+    /// - `env`: The environment
+    /// - `warranty_id`: The warranty ID to set to expired
+    pub fn set_to_expired(env: Env, warranty_id: u64) {
+        let mut warranty_map: Map<u64, WarrantyData> = env
+            .storage()
+            .instance()
+            .get(&DataKey::WarrantyData)
+            .expect("warranty storage not initialized");
+
+        let mut warranty: WarrantyData = warranty_map.get(warranty_id).expect("warranty not found");
+
+        warranty.owner.require_auth();
+
+        warranty.status = WarrantyStatus::Expired;
+        warranty_map.set(warranty_id, warranty.clone());
+        env.storage()
+            .instance()
+            .set(&DataKey::WarrantyData, &warranty_map);
+    }
+
     /// Get all warranty IDs for a specific owner
     ///
     /// # Arguments
