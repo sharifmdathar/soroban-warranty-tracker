@@ -56,7 +56,7 @@ export default function RegisterWarranty({
       setError(
         err instanceof Error
           ? err.message
-          : "Failed to connect wallet. Make sure Freighter is installed and unlocked."
+          : "Failed to connect wallet. Make sure Freighter is installed and unlocked.",
       );
     } finally {
       setConnecting(false);
@@ -73,7 +73,7 @@ export default function RegisterWarranty({
       // Check if wallet is connected
       if (!walletAddress) {
         setError(
-          "Wallet not connected. Please connect your Freighter wallet first."
+          "Wallet not connected. Please connect your Freighter wallet first.",
         );
         setLoading(false);
         return;
@@ -93,7 +93,7 @@ export default function RegisterWarranty({
         formData.manufacturer,
         formData.purchaseDate,
         formData.expirationDate,
-        signerAddress
+        signerAddress,
       );
 
       setSuccess(`Warranty registered successfully! ID: ${warrantyId}`);
@@ -112,7 +112,7 @@ export default function RegisterWarranty({
       }
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Failed to register warranty"
+        err instanceof Error ? err.message : "Failed to register warranty",
       );
     } finally {
       setLoading(false);
@@ -129,7 +129,9 @@ export default function RegisterWarranty({
           <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
             Register New Warranty
           </h2>
-          <p className="text-sm text-gray-500 mt-1">Add a new product warranty to the blockchain</p>
+          <p className="text-sm text-gray-500 mt-1">
+            Add a new product warranty to the blockchain
+          </p>
         </div>
       </div>
 

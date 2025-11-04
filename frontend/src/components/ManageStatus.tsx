@@ -1,20 +1,23 @@
-import { useState, useEffect } from 'react';
-import { Shield, Wallet } from 'lucide-react';
-import { WarrantyTrackerClient } from '../utils/soroban';
-import { WarrantyStatus } from '../types';
+import { useState, useEffect } from "react";
+import { Shield, Wallet } from "lucide-react";
+import { WarrantyTrackerClient } from "../utils/soroban";
+import { WarrantyStatus } from "../types";
 import {
   connectFreighter,
   getFreighterPublicKey,
   isFreighterAvailable,
-} from '../utils/wallet';
+} from "../utils/wallet";
 
 interface ManageStatusProps {
   contractId: string;
   onSuccess?: () => void;
 }
 
-export default function ManageStatus({ contractId, onSuccess }: ManageStatusProps) {
-  const [warrantyId, setWarrantyId] = useState('');
+export default function ManageStatus({
+  contractId,
+  onSuccess,
+}: ManageStatusProps) {
+  const [warrantyId, setWarrantyId] = useState("");
   const [status, setStatus] = useState<WarrantyStatus>(WarrantyStatus.Active);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -49,7 +52,7 @@ export default function ManageStatus({ contractId, onSuccess }: ManageStatusProp
       setError(
         err instanceof Error
           ? err.message
-          : 'Failed to connect wallet. Make sure Freighter is installed and unlocked.'
+          : "Failed to connect wallet. Make sure Freighter is installed and unlocked.",
       );
     } finally {
       setConnecting(false);
@@ -65,14 +68,16 @@ export default function ManageStatus({ contractId, onSuccess }: ManageStatusProp
     try {
       // Check if wallet is connected
       if (!walletAddress) {
-        setError('Wallet not connected. Please connect your Freighter wallet first.');
+        setError(
+          "Wallet not connected. Please connect your Freighter wallet first.",
+        );
         setLoading(false);
         return;
       }
 
       // Validate warranty ID
       if (!warrantyId.trim()) {
-        setError('Please enter a warranty ID');
+        setError("Please enter a warranty ID");
         setLoading(false);
         return;
       }
@@ -82,14 +87,18 @@ export default function ManageStatus({ contractId, onSuccess }: ManageStatusProp
       // First, verify the warranty exists and belongs to the connected wallet
       const warranty = await client.getWarranty(warrantyId.trim());
       if (!warranty) {
-        setError(`Warranty with ID ${warrantyId} not found. Please check the ID and try again. You can view your warranties in the "View Warranties" section.`);
+        setError(
+          `Warranty with ID ${warrantyId} not found. Please check the ID and try again. You can view your warranties in the "View Warranties" section.`,
+        );
         setLoading(false);
         return;
       }
 
       // Check if the connected wallet is the owner
       if (warranty.owner !== walletAddress) {
-        setError(`You are not the owner of warranty ${warrantyId}. Current owner: ${warranty.owner.slice(0, 8)}...${warranty.owner.slice(-8)}. Only the owner can update the status.`);
+        setError(
+          `You are not the owner of warranty ${warrantyId}. Current owner: ${warranty.owner.slice(0, 8)}...${warranty.owner.slice(-8)}. Only the owner can update the status.`,
+        );
         setLoading(false);
         return;
       }
@@ -97,13 +106,17 @@ export default function ManageStatus({ contractId, onSuccess }: ManageStatusProp
       // Re-verify warranty exists one more time to catch any race conditions
       const recheck = await client.getWarranty(warrantyId.trim());
       if (!recheck) {
-        setError(`Warranty ${warrantyId} was found earlier but no longer exists. Please refresh and try again.`);
+        setError(
+          `Warranty ${warrantyId} was found earlier but no longer exists. Please refresh and try again.`,
+        );
         setLoading(false);
         return;
       }
-      
+
       if (recheck.owner !== walletAddress) {
-        setError(`Warranty ownership has changed. Current owner: ${recheck.owner.slice(0, 8)}...${recheck.owner.slice(-8)}.`);
+        setError(
+          `Warranty ownership has changed. Current owner: ${recheck.owner.slice(0, 8)}...${recheck.owner.slice(-8)}.`,
+        );
         setLoading(false);
         return;
       }
@@ -111,14 +124,14 @@ export default function ManageStatus({ contractId, onSuccess }: ManageStatusProp
       await client.updateStatus(warrantyId, status, walletAddress);
 
       setSuccess(`Warranty status updated to ${status} successfully!`);
-      setWarrantyId('');
+      setWarrantyId("");
       setStatus(WarrantyStatus.Active);
 
       if (onSuccess) {
         onSuccess();
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update status');
+      setError(err instanceof Error ? err.message : "Failed to update status");
     } finally {
       setLoading(false);
     }
@@ -126,13 +139,15 @@ export default function ManageStatus({ contractId, onSuccess }: ManageStatusProp
 
   const handleRevoke = async () => {
     if (!warrantyId.trim()) {
-      setError('Please enter a warranty ID');
+      setError("Please enter a warranty ID");
       return;
     }
 
     // Check if wallet is connected
     if (!walletAddress) {
-      setError('Wallet not connected. Please connect your Freighter wallet first.');
+      setError(
+        "Wallet not connected. Please connect your Freighter wallet first.",
+      );
       return;
     }
 
@@ -146,29 +161,35 @@ export default function ManageStatus({ contractId, onSuccess }: ManageStatusProp
       // First, verify the warranty exists and belongs to the connected wallet
       const warranty = await client.getWarranty(warrantyId.trim());
       if (!warranty) {
-        setError(`Warranty with ID ${warrantyId} not found. Please check the ID and try again.`);
+        setError(
+          `Warranty with ID ${warrantyId} not found. Please check the ID and try again.`,
+        );
         setLoading(false);
         return;
       }
 
       // Check if the connected wallet is the owner
       if (warranty.owner !== walletAddress) {
-        setError(`You are not the owner of warranty ${warrantyId}. Only the owner can revoke the warranty.`);
+        setError(
+          `You are not the owner of warranty ${warrantyId}. Only the owner can revoke the warranty.`,
+        );
         setLoading(false);
         return;
       }
 
       await client.revokeWarranty(warrantyId, walletAddress);
 
-      setSuccess('Warranty revoked successfully!');
-      setWarrantyId('');
+      setSuccess("Warranty revoked successfully!");
+      setWarrantyId("");
       setStatus(WarrantyStatus.Active);
 
       if (onSuccess) {
         onSuccess();
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to revoke warranty');
+      setError(
+        err instanceof Error ? err.message : "Failed to revoke warranty",
+      );
     } finally {
       setLoading(false);
     }
@@ -178,14 +199,16 @@ export default function ManageStatus({ contractId, onSuccess }: ManageStatusProp
     <div className="bg-white rounded-lg shadow-md p-6">
       <div className="flex items-center gap-2 mb-6">
         <Shield className="w-6 h-6 text-primary-600" />
-        <h2 className="text-2xl font-bold text-gray-900">Manage Warranty Status</h2>
+        <h2 className="text-2xl font-bold text-gray-900">
+          Manage Warranty Status
+        </h2>
       </div>
 
       {/* Wallet Connection Status */}
       {!walletAvailable && (
         <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
           <p className="text-yellow-800">
-            Freighter wallet not detected. Please install{' '}
+            Freighter wallet not detected. Please install{" "}
             <a
               href="https://freighter.app"
               target="_blank"
@@ -193,7 +216,7 @@ export default function ManageStatus({ contractId, onSuccess }: ManageStatusProp
               className="underline font-medium"
             >
               Freighter
-            </a>{' '}
+            </a>{" "}
             to manage warranty status.
           </p>
         </div>
@@ -202,13 +225,15 @@ export default function ManageStatus({ contractId, onSuccess }: ManageStatusProp
       {walletAvailable && !walletAddress && (
         <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
           <div className="flex items-center justify-between">
-            <p className="text-yellow-800">Please connect your wallet to continue.</p>
+            <p className="text-yellow-800">
+              Please connect your wallet to continue.
+            </p>
             <button
               onClick={handleConnectWallet}
               disabled={connecting}
               className="bg-yellow-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {connecting ? 'Connecting...' : 'Connect Wallet'}
+              {connecting ? "Connecting..." : "Connect Wallet"}
             </button>
           </div>
         </div>
@@ -230,7 +255,10 @@ export default function ManageStatus({ contractId, onSuccess }: ManageStatusProp
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label htmlFor="warrantyId" className="block text-sm font-medium text-gray-700 mb-1">
+          <label
+            htmlFor="warrantyId"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
             Warranty ID *
           </label>
           <input
@@ -245,7 +273,10 @@ export default function ManageStatus({ contractId, onSuccess }: ManageStatusProp
         </div>
 
         <div>
-          <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1">
+          <label
+            htmlFor="status"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
             Status *
           </label>
           <select
@@ -279,7 +310,7 @@ export default function ManageStatus({ contractId, onSuccess }: ManageStatusProp
             disabled={loading}
             className="flex-1 bg-primary-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? 'Updating...' : 'Update Status'}
+            {loading ? "Updating..." : "Update Status"}
           </button>
           <button
             type="button"
@@ -294,4 +325,3 @@ export default function ManageStatus({ contractId, onSuccess }: ManageStatusProp
     </div>
   );
 }
-

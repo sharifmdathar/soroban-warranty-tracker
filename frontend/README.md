@@ -58,6 +58,7 @@ The built files will be in the `dist` directory.
 ## 🛠️ Development
 
 The frontend uses:
+
 - **React 18** - UI framework
 - **TypeScript** - Type safety
 - **Vite** - Build tool
@@ -102,4 +103,3 @@ This frontend currently includes placeholder implementations for contract intera
 - [Soroban Documentation](https://soroban.stellar.org/docs)
 - [React Documentation](https://react.dev)
 - [Tailwind CSS Documentation](https://tailwindcss.com/docs)
-

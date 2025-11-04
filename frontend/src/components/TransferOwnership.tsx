@@ -1,20 +1,23 @@
-import { useState, useEffect } from 'react';
-import { ArrowRight, Wallet } from 'lucide-react';
-import { WarrantyTrackerClient } from '../utils/soroban';
+import { useState, useEffect } from "react";
+import { ArrowRight, Wallet } from "lucide-react";
+import { WarrantyTrackerClient } from "../utils/soroban";
 import {
   connectFreighter,
   getFreighterPublicKey,
   isFreighterAvailable,
-} from '../utils/wallet';
+} from "../utils/wallet";
 
 interface TransferOwnershipProps {
   contractId: string;
   onSuccess?: () => void;
 }
 
-export default function TransferOwnership({ contractId, onSuccess }: TransferOwnershipProps) {
-  const [warrantyId, setWarrantyId] = useState('');
-  const [newOwner, setNewOwner] = useState('');
+export default function TransferOwnership({
+  contractId,
+  onSuccess,
+}: TransferOwnershipProps) {
+  const [warrantyId, setWarrantyId] = useState("");
+  const [newOwner, setNewOwner] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -48,7 +51,7 @@ export default function TransferOwnership({ contractId, onSuccess }: TransferOwn
       setError(
         err instanceof Error
           ? err.message
-          : 'Failed to connect wallet. Make sure Freighter is installed and unlocked.'
+          : "Failed to connect wallet. Make sure Freighter is installed and unlocked.",
       );
     } finally {
       setConnecting(false);
@@ -64,14 +67,18 @@ export default function TransferOwnership({ contractId, onSuccess }: TransferOwn
     try {
       // Check if wallet is connected
       if (!walletAddress) {
-        setError('Wallet not connected. Please connect your Freighter wallet first.');
+        setError(
+          "Wallet not connected. Please connect your Freighter wallet first.",
+        );
         setLoading(false);
         return;
       }
 
       // Validate addresses
-      if (!newOwner || !newOwner.startsWith('G') || newOwner.length !== 56) {
-        setError('Invalid new owner address. Address must start with G and be 56 characters long.');
+      if (!newOwner || !newOwner.startsWith("G") || newOwner.length !== 56) {
+        setError(
+          "Invalid new owner address. Address must start with G and be 56 characters long.",
+        );
         setLoading(false);
         return;
       }
@@ -79,15 +86,17 @@ export default function TransferOwnership({ contractId, onSuccess }: TransferOwn
       const client = new WarrantyTrackerClient({ contractId });
       await client.transferOwnership(warrantyId, newOwner, walletAddress);
 
-      setSuccess('Ownership transferred successfully!');
-      setWarrantyId('');
-      setNewOwner('');
+      setSuccess("Ownership transferred successfully!");
+      setWarrantyId("");
+      setNewOwner("");
 
       if (onSuccess) {
         onSuccess();
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to transfer ownership');
+      setError(
+        err instanceof Error ? err.message : "Failed to transfer ownership",
+      );
     } finally {
       setLoading(false);
     }
@@ -95,20 +104,25 @@ export default function TransferOwnership({ contractId, onSuccess }: TransferOwn
 
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
-      <h2 className="text-2xl font-bold text-gray-900 mb-6">Transfer Ownership</h2>
+      <h2 className="text-2xl font-bold text-gray-900 mb-6">
+        Transfer Ownership
+      </h2>
 
       {/* Wallet Connection Status */}
       {!walletAvailable && (
         <div className="mb-4 bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded-lg">
           <p className="text-sm">
-            Freighter wallet not detected. Please install Freighter to transfer ownership.
+            Freighter wallet not detected. Please install Freighter to transfer
+            ownership.
           </p>
         </div>
       )}
 
       {walletAvailable && !walletAddress && (
         <div className="mb-4 bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded-lg">
-          <p className="text-sm mb-2">Wallet not connected. Please connect your Freighter wallet.</p>
+          <p className="text-sm mb-2">
+            Wallet not connected. Please connect your Freighter wallet.
+          </p>
           <button
             type="button"
             onClick={handleConnectWallet}
@@ -116,7 +130,7 @@ export default function TransferOwnership({ contractId, onSuccess }: TransferOwn
             className="bg-yellow-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-yellow-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
             <Wallet className="w-4 h-4" />
-            {connecting ? 'Connecting...' : 'Connect Wallet'}
+            {connecting ? "Connecting..." : "Connect Wallet"}
           </button>
         </div>
       )}
@@ -124,7 +138,8 @@ export default function TransferOwnership({ contractId, onSuccess }: TransferOwn
       {walletAddress && (
         <div className="mb-4 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
           <p className="text-sm">
-            <strong>Wallet Connected:</strong> {walletAddress.substring(0, 8)}...
+            <strong>Wallet Connected:</strong> {walletAddress.substring(0, 8)}
+            ...
             {walletAddress.substring(walletAddress.length - 6)}
           </p>
         </div>
@@ -132,7 +147,10 @@ export default function TransferOwnership({ contractId, onSuccess }: TransferOwn
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label htmlFor="warrantyId" className="block text-sm font-medium text-gray-700 mb-1">
+          <label
+            htmlFor="warrantyId"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
             Warranty ID *
           </label>
           <input
@@ -147,7 +165,10 @@ export default function TransferOwnership({ contractId, onSuccess }: TransferOwn
         </div>
 
         <div>
-          <label htmlFor="newOwner" className="block text-sm font-medium text-gray-700 mb-1">
+          <label
+            htmlFor="newOwner"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
             New Owner Address *
           </label>
           <input
@@ -182,7 +203,7 @@ export default function TransferOwnership({ contractId, onSuccess }: TransferOwn
           className="w-full bg-primary-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
           {loading ? (
-            'Transferring...'
+            "Transferring..."
           ) : (
             <>
               <ArrowRight className="w-5 h-5" />
@@ -194,4 +215,3 @@ export default function TransferOwnership({ contractId, onSuccess }: TransferOwn
     </div>
   );
 }
-

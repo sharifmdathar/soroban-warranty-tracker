@@ -11,9 +11,9 @@ export interface WarrantyData {
 }
 
 export enum WarrantyStatus {
-  Active = 'Active',
-  Expired = 'Expired',
-  Revoked = 'Revoked',
+  Active = "Active",
+  Expired = "Expired",
+  Revoked = "Revoked",
 }
 
 export interface ContractConfig {
@@ -21,4 +21,3 @@ export interface ContractConfig {
   networkPassphrase: string;
   rpcUrl: string;
 }
-

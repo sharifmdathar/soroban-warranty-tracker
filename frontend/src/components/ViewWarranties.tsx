@@ -74,7 +74,7 @@ export default function ViewWarranties({ contractId }: ViewWarrantiesProps) {
     // Validate Stellar address format
     if (!owner.trim().startsWith("G") || owner.trim().length !== 56) {
       setError(
-        "Invalid Stellar address format. Address must start with G and be 56 characters long."
+        "Invalid Stellar address format. Address must start with G and be 56 characters long.",
       );
       return;
     }
@@ -93,7 +93,7 @@ export default function ViewWarranties({ contractId }: ViewWarrantiesProps) {
       }
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Failed to fetch warranties"
+        err instanceof Error ? err.message : "Failed to fetch warranties",
       );
     } finally {
       setLoading(false);
@@ -268,7 +268,7 @@ export default function ViewWarranties({ contractId }: ViewWarrantiesProps) {
                 </label>
                 <span
                   className={`inline-block px-4 py-2 rounded-full border-2 font-semibold ${getStatusColor(
-                    warranty.status as WarrantyStatus
+                    warranty.status as WarrantyStatus,
                   )}`}
                 >
                   {warranty.status}
@@ -319,7 +319,7 @@ export default function ViewWarranties({ contractId }: ViewWarrantiesProps) {
                   </div>
                   <span
                     className={`px-4 py-2 rounded-full border-2 font-semibold ${getStatusColor(
-                      warranty.status as WarrantyStatus
+                      warranty.status as WarrantyStatus,
                     )}`}
                   >
                     {warranty.status}

@@ -1,8 +1,4 @@
-import {
-  isConnected,
-  getAddress,
-  requestAccess,
-} from "@stellar/freighter-api";
+import { isConnected, getAddress, requestAccess } from "@stellar/freighter-api";
 
 export interface WalletConnection {
   publicKey: string | null;

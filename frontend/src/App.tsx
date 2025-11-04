@@ -1,5 +1,12 @@
 import { useState, Suspense, lazy } from "react";
-import { Package, Search, ArrowRight, Shield, Settings, Sparkles } from "lucide-react";
+import {
+  Package,
+  Search,
+  ArrowRight,
+  Shield,
+  Settings,
+  Sparkles,
+} from "lucide-react";
 
 // Lazy load components for code splitting
 const RegisterWarranty = lazy(() => import("./components/RegisterWarranty"));
@@ -26,8 +33,14 @@ function App() {
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-float"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-float" style={{ animationDelay: '1s' }}></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-indigo-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-float" style={{ animationDelay: '2s' }}></div>
+        <div
+          className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-float"
+          style={{ animationDelay: "1s" }}
+        ></div>
+        <div
+          className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-indigo-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-float"
+          style={{ animationDelay: "2s" }}
+        ></div>
       </div>
 
       {/* Header */}
@@ -56,7 +69,9 @@ function App() {
             {contractId && (
               <div className="text-sm text-gray-700 bg-gradient-to-r from-blue-100 to-purple-100 px-4 py-2 rounded-lg border border-blue-200 animate-scale-in">
                 <span className="font-medium">Contract:</span>{" "}
-                <span className="font-mono text-blue-700">{contractId.slice(0, 8)}...</span>
+                <span className="font-mono text-blue-700">
+                  {contractId.slice(0, 8)}...
+                </span>
               </div>
             )}
           </div>
@@ -82,7 +97,11 @@ function App() {
                     }`}
                     style={{ animationDelay: `${index * 0.1}s` }}
                   >
-                    <Icon className={`w-5 h-5 transition-transform ${isActive ? 'scale-110' : ''}`} />
+                    <Icon
+                      className={`w-5 h-5 transition-transform ${
+                        isActive ? "scale-110" : ""
+                      }`}
+                    />
                     <span>{item.label}</span>
                   </button>
                 );
@@ -120,7 +139,8 @@ function App() {
                     />
                     <p className="text-sm text-gray-500 flex items-center gap-2">
                       <span className="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
-                      Enter the contract ID after deploying the warranty tracker contract
+                      Enter the contract ID after deploying the warranty tracker
+                      contract
                     </p>
                   </div>
                 </div>

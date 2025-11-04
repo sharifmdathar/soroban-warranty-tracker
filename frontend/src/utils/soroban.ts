@@ -38,7 +38,7 @@ export class WarrantyTrackerClient {
   private async invokeContract(
     method: string,
     args: xdr.ScVal[],
-    signerAddress: string
+    signerAddress: string,
   ): Promise<xdr.ScVal> {
     try {
       // Get the current account from Horizon server
@@ -63,7 +63,7 @@ export class WarrantyTrackerClient {
       const accountResponse = await horizon.loadAccount(signerAddress);
       const sourceAccount = new Account(
         signerAddress,
-        accountResponse.sequenceNumber()
+        accountResponse.sequenceNumber(),
       );
 
       // Build the transaction
@@ -102,13 +102,13 @@ export class WarrantyTrackerClient {
             `Failed to update warranty status: The contract simulation is failing due to an enum parameter encoding issue. ` +
               `The contract code allows status changes, but Soroban's simulation cannot properly handle the enum parameter. ` +
               `This is a known limitation with contracttype enums during simulation. ` +
-              `Please use the "Revoke Warranty" button for Revoked status, which uses a different method that works.`
+              `Please use the "Revoke Warranty" button for Revoked status, which uses a different method that works.`,
           );
         }
 
         // Extract more detailed error information for other methods
         let errorMessage = `Transaction simulation failed: ${JSON.stringify(
-          error
+          error,
         )}`;
 
         // Check for specific error types
@@ -127,11 +127,11 @@ export class WarrantyTrackerClient {
             const errorEvent = events.find(
               (e: any) =>
                 e &&
-                (e.topics?.includes("error") || e.topics?.includes("Error"))
+                (e.topics?.includes("error") || e.topics?.includes("Error")),
             );
             if (errorEvent) {
               errorMessage = `Contract error: ${JSON.stringify(
-                errorEvent.data || errorEvent
+                errorEvent.data || errorEvent,
               )}`;
             }
           }
@@ -155,7 +155,7 @@ export class WarrantyTrackerClient {
         // assembleTransaction uses the prepared transaction and adds auth entries from simulation
         const assembledTxBuilder = rpc.assembleTransaction(
           preparedTx,
-          simResponse
+          simResponse,
         );
 
         // Build the transaction from the builder
@@ -166,7 +166,7 @@ export class WarrantyTrackerClient {
             assembleError instanceof Error
               ? assembleError.message
               : String(assembleError)
-          }`
+          }`,
         );
       }
 
@@ -191,7 +191,7 @@ export class WarrantyTrackerClient {
       try {
         signedTransaction = TransactionBuilder.fromXDR(
           signedTxResult.signedTxXdr,
-          this.config.networkPassphrase
+          this.config.networkPassphrase,
         );
       } catch (parseError) {
         const errorMsg =
@@ -206,7 +206,7 @@ export class WarrantyTrackerClient {
           try {
             const signedEnvelope = xdr.TransactionEnvelope.fromXDR(
               signedTxResult.signedTxXdr,
-              "base64"
+              "base64",
             );
 
             // Extract signature from envelope
@@ -232,7 +232,7 @@ export class WarrantyTrackerClient {
                 finalTx.signatures.push(signature);
               } else {
                 throw new Error(
-                  "Assembled transaction does not have a signatures array"
+                  "Assembled transaction does not have a signatures array",
                 );
               }
             }
@@ -242,7 +242,7 @@ export class WarrantyTrackerClient {
             throw new Error(
               `Failed to extract signature from Soroban envelope: ${
                 sigError instanceof Error ? sigError.message : String(sigError)
-              }`
+              }`,
             );
           }
         } else {
@@ -258,7 +258,7 @@ export class WarrantyTrackerClient {
 
       if ("errorResult" in sendResponse) {
         throw new Error(
-          `Transaction failed: ${JSON.stringify(sendResponse.errorResult)}`
+          `Transaction failed: ${JSON.stringify(sendResponse.errorResult)}`,
         );
       }
 
@@ -296,20 +296,20 @@ export class WarrantyTrackerClient {
               typeof nativeValue === "number"
             ) {
               result = xdr.ScVal.scvU64(
-                xdr.Uint64.fromString(nativeValue.toString())
+                xdr.Uint64.fromString(nativeValue.toString()),
               );
             } else if (typeof nativeValue === "bigint") {
               result = xdr.ScVal.scvU64(
-                xdr.Uint64.fromString(nativeValue.toString())
+                xdr.Uint64.fromString(nativeValue.toString()),
               );
             } else {
               throw new Error(
-                `Unexpected native value type: ${typeof nativeValue}`
+                `Unexpected native value type: ${typeof nativeValue}`,
               );
             }
           } else {
             throw new Error(
-              `Unexpected simulation result type: ${typeof simResult}`
+              `Unexpected simulation result type: ${typeof simResult}`,
             );
           }
 
@@ -337,12 +337,12 @@ export class WarrantyTrackerClient {
     manufacturer: string,
     purchaseDate: string,
     expirationDate: string,
-    signerAddress: string
+    signerAddress: string,
   ): Promise<string> {
     // Validate address format
     if (!owner || !owner.startsWith("G") || owner.length !== 56) {
       throw new Error(
-        "Invalid Stellar address format. Address must start with G and be 56 characters long."
+        "Invalid Stellar address format. Address must start with G and be 56 characters long.",
       );
     }
 
@@ -357,16 +357,16 @@ export class WarrantyTrackerClient {
     // Ensure owner is the signer (contract requires owner to authorize)
     if (owner !== signerAddress) {
       throw new Error(
-        "Owner address must match the signer address. The contract requires the owner to authorize the transaction."
+        "Owner address must match the signer address. The contract requires the owner to authorize the transaction.",
       );
     }
 
     // Convert dates to Unix timestamps (seconds)
     const purchaseTimestamp = Math.floor(
-      new Date(purchaseDate).getTime() / 1000
+      new Date(purchaseDate).getTime() / 1000,
     );
     const expirationTimestamp = Math.floor(
-      new Date(expirationDate).getTime() / 1000
+      new Date(expirationDate).getTime() / 1000,
     );
 
     // Validate dates
@@ -392,13 +392,13 @@ export class WarrantyTrackerClient {
       const result = await this.invokeContract(
         "register_warranty",
         args,
-        signerAddress
+        signerAddress,
       );
       return scValToNative(result).toString();
     } catch (err) {
       if (err instanceof Error && err.message.includes("address")) {
         throw new Error(
-          "Invalid Stellar address. Please connect a valid wallet."
+          "Invalid Stellar address. Please connect a valid wallet.",
         );
       }
       throw err;
@@ -412,16 +412,16 @@ export class WarrantyTrackerClient {
         new TransactionBuilder(
           new Account(
             "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF",
-            "0"
+            "0",
           ),
           {
             fee: "100",
             networkPassphrase: this.config.networkPassphrase,
-          }
+          },
         )
           .addOperation(this.contract.call("get_warranty", ...args))
           .setTimeout(TimeoutInfinite)
-          .build()
+          .build(),
       );
 
       if ("error" in simResponse || (simResponse as any).errorResult) {
@@ -474,10 +474,10 @@ export class WarrantyTrackerClient {
             warrantyData.status === "Active"
               ? WarrantyStatus.Active
               : warrantyData.status === 1 ||
-                warrantyData.status === "1" ||
-                warrantyData.status === "Expired"
-              ? WarrantyStatus.Expired
-              : WarrantyStatus.Revoked,
+                  warrantyData.status === "1" ||
+                  warrantyData.status === "Expired"
+                ? WarrantyStatus.Expired
+                : WarrantyStatus.Revoked,
           created_at:
             warrantyData.created_at?.toString() ||
             warrantyData.createdAt?.toString() ||
@@ -505,16 +505,16 @@ export class WarrantyTrackerClient {
         new TransactionBuilder(
           new Account(
             "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF",
-            "0"
+            "0",
           ),
           {
             fee: "100",
             networkPassphrase: this.config.networkPassphrase,
-          }
+          },
         )
           .addOperation(this.contract.call("get_warranties_by_owner", ...args))
           .setTimeout(TimeoutInfinite)
-          .build()
+          .build(),
       );
 
       if ("error" in simResponse || (simResponse as any).errorResult) {
@@ -544,7 +544,7 @@ export class WarrantyTrackerClient {
       if (Array.isArray(warrantiesData)) {
         // If it's an array of warranty IDs (u64), return them as strings
         const warrantyIds = warrantiesData.map(
-          (id: any) => id?.toString() || String(id)
+          (id: any) => id?.toString() || String(id),
         );
 
         // Fetch full warranty data for each ID
@@ -568,7 +568,7 @@ export class WarrantyTrackerClient {
   async transferOwnership(
     warrantyId: string,
     newOwner: string,
-    signerAddress: string
+    signerAddress: string,
   ): Promise<void> {
     const args = [
       xdr.ScVal.scvU64(xdr.Uint64.fromString(warrantyId)),
@@ -580,7 +580,7 @@ export class WarrantyTrackerClient {
   async updateStatus(
     warrantyId: string,
     status: WarrantyStatus,
-    signerAddress: string
+    signerAddress: string,
   ): Promise<void> {
     // Use dedicated methods for each status to avoid enum parameter simulation issues
     if (status === WarrantyStatus.Revoked) {
@@ -609,7 +609,7 @@ export class WarrantyTrackerClient {
 
   async revokeWarranty(
     warrantyId: string,
-    signerAddress: string
+    signerAddress: string,
   ): Promise<void> {
     const args = [xdr.ScVal.scvU64(xdr.Uint64.fromString(warrantyId))];
     await this.invokeContract("revoke_warranty", args, signerAddress);
@@ -617,13 +617,13 @@ export class WarrantyTrackerClient {
 
   async getWarrantyCount(): Promise<string> {
     throw new Error(
-      "Read operations not fully implemented. Use a Soroban RPC client."
+      "Read operations not fully implemented. Use a Soroban RPC client.",
     );
   }
 
   async isWarrantyExpired(_warrantyId: string): Promise<boolean> {
     throw new Error(
-      "Read operations not fully implemented. Use a Soroban RPC client."
+      "Read operations not fully implemented. Use a Soroban RPC client.",
     );
   }
 }
