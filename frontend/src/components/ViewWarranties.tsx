@@ -1,11 +1,7 @@
 import { useState, useMemo } from "react";
 import { Search, Eye, Calendar, Package } from "lucide-react";
-import type { WarrantyData, WarrantyStatus } from "../types";
-import {
-  formatDate,
-  getStatusColor,
-  WarrantyTrackerClient,
-} from "../utils/soroban";
+import type { WarrantyData } from "../types";
+import { formatDate, WarrantyTrackerClient } from "../utils/soroban";
 
 interface ViewWarrantiesProps {
   contractId: string;
@@ -262,18 +258,7 @@ export default function ViewWarranties({ contractId }: ViewWarrantiesProps) {
                   {warranty.owner}
                 </p>
               </div>
-              <div>
-                <label className="text-sm font-semibold text-gray-600 mb-2 block">
-                  Status
-                </label>
-                <span
-                  className={`inline-block px-4 py-2 rounded-full border-2 font-semibold ${getStatusColor(
-                    warranty.status as WarrantyStatus,
-                  )}`}
-                >
-                  {warranty.status}
-                </span>
-              </div>
+              {/* Status hidden temporarily until backend enum handling is stable */}
               <div>
                 <label className="text-sm font-semibold text-gray-600 mb-2 flex items-center gap-2">
                   <Calendar className="w-4 h-4" />
@@ -317,13 +302,7 @@ export default function ViewWarranties({ contractId }: ViewWarrantiesProps) {
                       Warranty ID: {warranty.id}
                     </span>
                   </div>
-                  <span
-                    className={`px-4 py-2 rounded-full border-2 font-semibold ${getStatusColor(
-                      warranty.status as WarrantyStatus,
-                    )}`}
-                  >
-                    {warranty.status}
-                  </span>
+                  {/* Status badge hidden for now */}
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
