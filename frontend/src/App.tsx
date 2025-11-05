@@ -18,7 +18,9 @@ type View = "register" | "view" | "transfer" | "status" | "settings";
 
 function App() {
   const [currentView, setCurrentView] = useState<View>("register");
-  const [contractId, setContractId] = useState("");
+  const [contractId, setContractId] = useState(
+    "CDHLYNTLHUONKTPEMEJLN6RU43SR7XJLVSJLCUMIRRNR7D4NSG644DEU"
+  );
 
   const navigation = [
     { id: "register" as View, label: "Register Warranty", icon: Package },
