@@ -15,7 +15,9 @@ A Soroban smart contract for tracking product warranties on the Stellar network.
 
 ## 📹 Demo Video
 
-![Demo Video](./assets/demo.mp4)
+[![Soroban Warranty Tracker - Demo Video](https://img.youtube.com/vi/sx_xSYXQSDE/0.jpg)](https://www.youtube.com/watch?v=sx_xSYXQSDE)
+
+[📥 Download from repo](./assets/demo.mp4)
 
 ## ✨ Features
 
