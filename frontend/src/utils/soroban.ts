@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- Soroban RPC responses use dynamic shapes */
 import {
   Contract,
   Networks,
@@ -84,11 +85,11 @@ export class WarrantyTrackerClient {
         simResponse = { error: simErr };
       }
 
-      if ("error" in simResponse || (simResponse as any).errorResult) {
+      if ("error" in simResponse || simResponse.errorResult) {
         const error =
           "error" in simResponse
             ? simResponse.error
-            : (simResponse as any).errorResult;
+            : simResponse.errorResult;
 
         // Extract error string for checking
         const errorStr =
@@ -267,9 +268,9 @@ export class WarrantyTrackerClient {
       if (
         simResponse &&
         "result" in simResponse &&
-        (simResponse as any).result?.retval
+        simResponse.result?.retval
       ) {
-        const simResult = (simResponse as any).result.retval;
+        const simResult = simResponse.result.retval;
 
         // The retval is likely an object (ScVal structure), not a string
         // Use scValToNative to convert it to native JavaScript, then reconstruct ScVal
@@ -314,7 +315,7 @@ export class WarrantyTrackerClient {
           }
 
           return result;
-        } catch (error) {
+        } catch (_error) {
           // If we can't extract the result, but transaction succeeded, return success indicator
           return xdr.ScVal.scvBool(true);
         }
@@ -424,25 +425,23 @@ export class WarrantyTrackerClient {
           .build(),
       );
 
-      if ("error" in simResponse || (simResponse as any).errorResult) {
+      const sim = simResponse as { error?: unknown; errorResult?: unknown; result?: { retval?: unknown } };
+      if ("error" in sim || sim.errorResult) {
         return null;
       }
 
-      if (
-        !simResponse ||
-        !("result" in simResponse && (simResponse as any).result?.retval)
-      ) {
+      if (!sim || !sim.result?.retval) {
         return null;
       }
 
-      const simResult = (simResponse as any).result.retval;
+      const simResult = sim.result.retval;
 
       // Convert ScVal to native JavaScript
       let warrantyData: any;
       if (simResult instanceof xdr.ScVal) {
         warrantyData = scValToNative(simResult);
       } else if (typeof simResult === "object" && simResult !== null) {
-        warrantyData = scValToNative(simResult);
+        warrantyData = scValToNative(simResult as xdr.ScVal);
       } else {
         return null;
       }
@@ -450,8 +449,6 @@ export class WarrantyTrackerClient {
       // The contract returns a struct, which scValToNative converts to an object
       // Convert it to WarrantyData format
       if (typeof warrantyData === "object" && warrantyData !== null) {
-        // Map the contract struct to WarrantyData
-        // The struct fields depend on your contract, but typically:
         const data: WarrantyData = {
           id: warrantyId,
           owner: warrantyData.owner || warrantyData.owner?.toString() || "",
@@ -488,7 +485,7 @@ export class WarrantyTrackerClient {
       }
 
       return null;
-    } catch (error) {
+    } catch (_error) {
       return null;
     }
   }
@@ -517,25 +514,23 @@ export class WarrantyTrackerClient {
           .build(),
       );
 
-      if ("error" in simResponse || (simResponse as any).errorResult) {
+      const sim = simResponse as { error?: unknown; errorResult?: unknown; result?: { retval?: unknown } };
+      if ("error" in sim || sim.errorResult) {
         return [];
       }
 
-      if (
-        !simResponse ||
-        !("result" in simResponse && (simResponse as any).result?.retval)
-      ) {
+      if (!sim || !sim.result?.retval) {
         return [];
       }
 
-      const simResult = (simResponse as any).result.retval;
+      const simResult = sim.result.retval;
 
       // Convert ScVal to native JavaScript
       let warrantiesData: any;
       if (simResult instanceof xdr.ScVal) {
         warrantiesData = scValToNative(simResult);
       } else if (typeof simResult === "object" && simResult !== null) {
-        warrantiesData = scValToNative(simResult);
+        warrantiesData = scValToNative(simResult as xdr.ScVal);
       } else {
         return [];
       }
@@ -560,7 +555,7 @@ export class WarrantyTrackerClient {
       }
 
       return [];
-    } catch (error) {
+    } catch (_error) {
       return [];
     }
   }

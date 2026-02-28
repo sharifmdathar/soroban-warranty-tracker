@@ -19,7 +19,7 @@ type View = "register" | "view" | "transfer" | "status" | "settings";
 function App() {
   const [currentView, setCurrentView] = useState<View>("register");
   const [contractId, setContractId] = useState(
-    "CDHLYNTLHUONKTPEMEJLN6RU43SR7XJLVSJLCUMIRRNR7D4NSG644DEU"
+    "CBU6JP36NSG7VGTLDBK3O7RMDCSBCCL4PQWIWXXDTGSMF2FENWXZ4Y6W"
   );
 
   const navigation = [

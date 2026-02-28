@@ -21,7 +21,7 @@ export default function ViewWarranties({ contractId }: ViewWarrantiesProps) {
     if (!contractId) return null;
     try {
       return new WarrantyTrackerClient({ contractId });
-    } catch (err) {
+    } catch (_err) {
       return null;
     }
   }, [contractId]);

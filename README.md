@@ -6,11 +6,16 @@ A Soroban smart contract for tracking product warranties on the Stellar network.
 
 **Frontend**: [https://soroban-warranty-tracker.vercel.app/](https://soroban-warranty-tracker.vercel.app/)
 
-**Testnet Contract ID:** `CDHLYNTLHUONKTPEMEJLN6RU43SR7XJLVSJLCUMIRRNR7D4NSG644DEU`
+**Testnet Contract ID:** `CBU6JP36NSG7VGTLDBK3O7RMDCSBCCL4PQWIWXXDTGSMF2FENWXZ4Y6W`
 
-<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/8c12a65d-00b3-464a-acc5-694eb454dc3c" />
+![Deployed Contract Screenshot](./assets/deployed.png)
 
 > 💡 **Note:** Connect your Freighter wallet and start tracking warranties on Stellar testnet! To use this contract in the frontend, paste the Contract ID in the Settings section if needed.
+
+
+## 📹 Demo Video
+
+![Demo Video](./assets/demo.mp4)
 
 ## ✨ Features
 
@@ -23,9 +28,9 @@ A Soroban smart contract for tracking product warranties on the Stellar network.
 
 ## Project Visuals
 
-<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/984bb351-cb68-4613-b8a7-314e9ece6b67" />
-<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/a8910d31-922a-4fb4-be80-bc0a70111c59" />
-<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/8dac6872-5c3a-4873-8b6c-b1394dc06694" />
+![Screenshot 1](./assets/screenshot-1.png) 
+![Screenshot 2](./assets/screenshot-2.png) 
+![Screenshot 3](./assets/screenshot-3.png)
 
 ## 📋 Prerequisites
 
@@ -39,13 +44,15 @@ Before you begin, ensure you have the following installed:
 
 ```
 .
+├── assets/                  # Screenshots and media (replace .svg placeholders with .png)
 ├── contracts/
 │   └── warranty-tracker/
 │       ├── src/
-│       │   ├── lib.rs      # Main contract implementation
+│       │   ├── lib.rs       # Main contract implementation
 │       │   └── test.rs      # Test suite
 │       ├── Cargo.toml       # Contract dependencies
 │       └── Makefile         # Build and test commands
+├── frontend/                # React + Vite frontend
 ├── Cargo.toml               # Workspace configuration
 └── README.md
 ```
@@ -99,7 +106,7 @@ stellar keys fund deployer --network testnet
 curl "https://friendbot-testnet.stellar.org/?addr=<YOUR_PUBLIC_KEY>"
 
 # 3. Build the contract
-cd contracts/warranty-tracker && stellar contract build
+stellar contract build
 
 # 4. Deploy (replace 'deployer' with your account name)
 stellar contract deploy \
@@ -139,6 +146,12 @@ The test suite covers:
 - 🔄 Ownership transfers
 - 🚫 Transfer restrictions for non-active warranties
 - ⏰ Expiration detection
+
+---
+
+## ✅ Test Results
+
+![Tests passing](./assets/tests-passing.png) 
 
 ## 📡 Contract API
 
@@ -259,14 +272,14 @@ Check if a warranty is expired based on current time.
 
 ```rust
 pub struct WarrantyData {
-    pub id: u64,                    // Unique warranty identifier
-    pub owner: Address,             // Current owner address
-    pub product_name: String,       // Product name
-    pub serial_number: String,     // Product serial number
-    pub manufacturer: String,       // Manufacturer name
-    pub purchase_date: u64,         // Purchase date (Unix timestamp)
-    pub expiration_date: u64,      // Expiration date (Unix timestamp)
-    pub status: WarrantyStatus,     // Current status
+    pub id: u64,                     // Unique warranty identifier
+    pub owner: Address,              // Current owner address
+    pub product_name: String,        // Product name
+    pub serial_number: String,       // Product serial number
+    pub manufacturer: String,        // Manufacturer name
+    pub purchase_date: u64,          // Purchase date (Unix timestamp)
+    pub expiration_date: u64,        // Expiration date (Unix timestamp)
+    pub status: WarrantyStatus,      // Current status
     pub created_at: u64,             // Creation timestamp
 }
 ```
@@ -339,7 +352,7 @@ cargo clean
 
 ## 📄 License
 
-This project is licensed under the MIT License (or specify your license).
+This project is licensed under the MIT License.
 
 ## 🤝 Contributing
 
