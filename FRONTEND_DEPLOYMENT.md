@@ -8,8 +8,8 @@ This guide covers deploying the Warranty Tracker frontend to various hosting pla
 
    ```bash
    cd frontend
-   npm install
-   npm run build
+   bun install
+   bun run build
    ```
 
 2. **Your Contract ID**: Have your deployed contract ID ready (from backend deployment)
@@ -32,7 +32,7 @@ This guide covers deploying the Warranty Tracker frontend to various hosting pla
 1. **Install Vercel CLI** (optional, you can also use the web UI):
 
    ```bash
-   npm i -g vercel
+   bun install -g vercel
    ```
 
 2. **Deploy from command line**:
@@ -47,7 +47,7 @@ This guide covers deploying the Warranty Tracker frontend to various hosting pla
    - Link to existing project or create new
    - Project settings (use defaults)
    - Build settings:
-     - Build Command: `npm run build`
+     - Build Command: `bun run build`
      - Output Directory: `dist`
 
 3. **Or deploy via GitHub** (recommended):
@@ -101,14 +101,14 @@ This guide covers deploying the Warranty Tracker frontend to various hosting pla
 1. **Install Netlify CLI** (optional):
 
    ```bash
-   npm i -g netlify-cli
+   bun install -g netlify-cli
    ```
 
 2. **Build the frontend**:
 
    ```bash
    cd frontend
-   npm run build
+   bun run build
    ```
 
 3. **Deploy via CLI**:
@@ -127,7 +127,7 @@ This guide covers deploying the Warranty Tracker frontend to various hosting pla
    - Connect GitHub and select your repository
    - Configure build settings:
      - Base directory: `frontend`
-     - Build command: `npm run build` (or `pnpm build`)
+     - Build command: `bun run build`
      - Publish directory: `frontend/dist`
    - Click "Deploy site"
 
@@ -178,11 +178,11 @@ This guide covers deploying the Warranty Tracker frontend to various hosting pla
    });
    ```
 
-2. **Install `gh-pages`**:
+2. **Install `gh-pages` (as a dev dependency with Bun)**:
 
    ```bash
    cd frontend
-   npm install --save-dev gh-pages
+   bun add -d gh-pages
    ```
 
 3. **Add deploy script to `package.json`**:
@@ -190,7 +190,7 @@ This guide covers deploying the Warranty Tracker frontend to various hosting pla
    ```json
    {
      "scripts": {
-       "predeploy": "npm run build",
+       "predeploy": "bun run build",
        "deploy": "gh-pages -d dist"
      }
    }
@@ -199,7 +199,7 @@ This guide covers deploying the Warranty Tracker frontend to various hosting pla
 4. **Deploy**:
 
    ```bash
-   npm run deploy
+   bun run deploy
    ```
 
 5. **Enable GitHub Pages**:
@@ -237,7 +237,7 @@ This guide covers deploying the Warranty Tracker frontend to various hosting pla
    - Choose your repository
    - Configure:
      - Framework preset: Vite
-     - Build command: `npm run build` (or `pnpm build`)
+     - Build command: `bun run build`
      - Build output directory: `frontend/dist`
      - Root directory: `frontend`
 
@@ -262,14 +262,14 @@ This guide covers deploying the Warranty Tracker frontend to various hosting pla
 1. **Install Surge**:
 
    ```bash
-   npm install -g surge
+   bun install -g surge
    ```
 
 2. **Build and deploy**:
 
    ```bash
    cd frontend
-   npm run build
+   bun run build
    cd dist
    surge
    ```
@@ -342,8 +342,8 @@ After deployment, you may want to:
 
 ```bash
 cd frontend
-npm install
-npm run build
+bun install
+bun run build
 # Output: frontend/dist/
 ```
 
@@ -351,7 +351,7 @@ npm run build
 
 ```bash
 cd frontend
-npm run preview
+bun run preview
 # Usually runs on http://localhost:4173
 ```
 
